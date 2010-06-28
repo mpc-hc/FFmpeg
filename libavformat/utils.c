@@ -1190,6 +1190,8 @@ static int av_read_frame_internal(AVFormatContext *s, AVPacket *pkt)
             if (ret < 0) {
                 if (ret == AVERROR(EAGAIN))
                     return ret;
+                if (ret == AVERROR(EIO))
+                    return ret;
                 /* return the last frames, if any */
                 for(i = 0; i < s->nb_streams; i++) {
                     st = s->streams[i];
