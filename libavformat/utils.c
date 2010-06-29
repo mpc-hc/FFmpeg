@@ -1849,6 +1849,8 @@ static int has_duration(AVFormatContext *ic)
 {
     int i;
     AVStream *st;
+    if(ic->duration != AV_NOPTS_VALUE)
+        return 1;
 
     for(i = 0;i < ic->nb_streams; i++) {
         st = ic->streams[i];
@@ -1906,14 +1908,14 @@ static void update_stream_timings(AVFormatContext *ic)
                 duration = end_time - start_time;
         }
     }
-    if (duration != INT64_MIN) {
+    if (duration != INT64_MIN && ic->duration == AV_NOPTS_VALUE) {
         ic->duration = duration;
-        if (ic->file_size > 0) {
+    }
+        if (ic->file_size > 0 && ic->duration != AV_NOPTS_VALUE) {
             /* compute the bitrate */
             ic->bit_rate = (double)ic->file_size * 8.0 * AV_TIME_BASE /
                 (double)ic->duration;
         }
-    }
 }
 
 static void fill_all_stream_timings(AVFormatContext *ic)
