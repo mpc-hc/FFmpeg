@@ -2072,6 +2072,43 @@ static void estimate_timings_from_pts(AVFormatContext *ic, int64_t old_offset)
     }
 }
 
+static void estimate_timings_from_pts2(AVFormatContext *ic, int64_t old_offset)
+{
+    AVStream *st;
+    int i, step= 1024;
+    int64_t ts, pos;
+
+    for(i=0;i<ic->nb_streams;i++) {
+        st = ic->streams[i];
+
+        pos = 0;
+        ts = ic->iformat->read_timestamp(ic, i, &pos, DURATION_MAX_READ_SIZE);
+        if (ts == AV_NOPTS_VALUE)
+            continue;
+        if (st->start_time == AV_NOPTS_VALUE ||
+            st->start_time > ts)
+            st->start_time = ts;
+
+        pos = avio_size(ic->pb) - 1;
+        do {
+            pos -= step;
+            ts = ic->iformat->read_timestamp(ic, i, &pos, pos + step);
+            step += step;
+        } while (ts == AV_NOPTS_VALUE && pos >= step && step < DURATION_MAX_READ_SIZE);
+
+        if (ts == AV_NOPTS_VALUE)
+            continue;
+
+        if (st->duration == AV_NOPTS_VALUE
+        ||  st->duration < ts - st->start_time)
+            st->duration = ts - st->start_time;
+    }
+
+    fill_all_stream_timings(ic);
+
+    avio_seek(ic->pb, old_offset, SEEK_SET);
+}
+
 static void estimate_timings(AVFormatContext *ic, int64_t old_offset)
 {
     int64_t file_size;
@@ -2095,6 +2132,10 @@ static void estimate_timings(AVFormatContext *ic, int64_t old_offset)
         /* at least one component has timings - we use them for all
            the components */
         fill_all_stream_timings(ic);
+    } else if (ic->iformat->read_timestamp &&
+        file_size && !url_is_streamed(ic->pb)) {
+        /* get accurate estimate from the PTSes */
+        estimate_timings_from_pts2(ic, old_offset);
     } else {
         av_log(ic, AV_LOG_WARNING, "Estimating duration from bitrate, this may be inaccurate\n");
         /* less precise: use bitrate info */
