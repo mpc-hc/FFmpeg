@@ -281,7 +281,7 @@ ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVIOContext *pb,
         if (rm_read_audio_stream_info(s, pb, st, rst, 0))
             return -1;
     } else {
-        int fps;
+        int fps, fps2;
         if (avio_rl32(pb) != MKTAG('V', 'I', 'D', 'O')) {
         fail1:
             av_log(st->codec, AV_LOG_ERROR, "Unsupported video codec\n");
@@ -295,18 +295,17 @@ ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVIOContext *pb,
             goto fail1;
         st->codec->width = avio_rb16(pb);
         st->codec->height = avio_rb16(pb);
-        st->codec->time_base.num= 1;
+        st->codec->time_base.num= 1 << 16;
         fps= avio_rb16(pb);
         st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
         avio_rb32(pb);
-        avio_skip(pb, 2);
-        avio_rb16(pb);
+        fps2= avio_rb32(pb);
 
         if ((ret = rm_read_extradata(pb, st->codec, codec_data_size - (avio_tell(pb) - codec_pos))) < 0)
             return ret;
 
 //        av_log(s, AV_LOG_DEBUG, "fps= %d fps2= %d\n", fps, fps2);
-        st->codec->time_base.den = fps * st->codec->time_base.num;
+        st->codec->time_base.den = fps2;
         //XXX: do we really need that?
         switch(st->codec->extradata[4]>>4){
         case 1: st->codec->codec_id = CODEC_ID_RV10; break;
