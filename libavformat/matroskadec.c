@@ -1498,9 +1498,6 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
             avio_wl16(&b, track->audio.bitdepth);
             avio_wl32(&b, track->audio.out_samplerate);
             avio_wl32(&b, matroska->ctx->duration * track->audio.out_samplerate);
-        } else if (codec_id == CODEC_ID_RV10 || codec_id == CODEC_ID_RV20 ||
-                   codec_id == CODEC_ID_RV30 || codec_id == CODEC_ID_RV40) {
-            extradata_offset = 26;
         } else if (codec_id == CODEC_ID_RA_144) {
             track->audio.out_samplerate = 8000;
             track->audio.channels = 1;
