@@ -2307,7 +2307,7 @@ static int tb_unreliable(AVCodecContext *c){
 /*       || c->codec_tag == AV_RL32("DIVX")
        || c->codec_tag == AV_RL32("XVID")*/
        || c->codec_id == CODEC_ID_MPEG2VIDEO
-       || c->codec_id == CODEC_ID_H264
+/*       || c->codec_id == CODEC_ID_H264 */
        )
         return 1;
     return 0;
