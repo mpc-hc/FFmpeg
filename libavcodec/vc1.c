@@ -802,9 +802,9 @@ int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
 
     if(v->interlace){
         v->fcm = decode012(gb);
-        if(v->fcm){
+        if(v->fcm == 2){
             if(!v->warn_interlaced++)
-                av_log(v->s.avctx, AV_LOG_ERROR, "Interlaced frames/fields support is not implemented\n");
+                av_log(v->s.avctx, AV_LOG_ERROR, "Interlaced fields support is not implemented\n");
             return -1;
         }
     }
@@ -826,6 +826,13 @@ int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
         v->p_frame_skipped = 1;
         return 0;
     }
+
+    if(v->interlace && v->fcm){
+        if(!v->warn_interlaced++)
+            av_log(v->s.avctx, AV_LOG_ERROR, "Interlaced frames support is not implemented\n");
+        return -1;
+    }
+
     if(v->tfcntrflag)
         skip_bits(gb, 8);
     if(v->broadcast) {
