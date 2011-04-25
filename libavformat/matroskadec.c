@@ -1924,24 +1924,13 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
                 else
                     pkt->pts = timecode;
                 pkt->pos = pos;
-                if (st->codec->codec_id == CODEC_ID_TEXT)
+                if (track->type == MATROSKA_TRACK_TYPE_SUBTITLE)
                     pkt->convergence_duration = duration;
-                else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
+                else
                     pkt->duration = duration;
 
-                if (st->codec->codec_id == CODEC_ID_SSA)
-                    matroska_fix_ass_packet(matroska, pkt, duration);
-
-                if (matroska->prev_pkt &&
-                    timecode != AV_NOPTS_VALUE &&
-                    matroska->prev_pkt->pts == timecode &&
-                    matroska->prev_pkt->stream_index == st->index &&
-                    st->codec->codec_id == CODEC_ID_SSA)
-                    matroska_merge_packets(matroska->prev_pkt, pkt);
-                else {
-                    dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
-                    matroska->prev_pkt = pkt;
-                }
+                dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
+                matroska->prev_pkt = pkt;
             }
 
             if (timecode != AV_NOPTS_VALUE)
