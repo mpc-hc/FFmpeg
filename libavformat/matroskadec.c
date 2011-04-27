@@ -1737,7 +1737,9 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
     if (st->discard >= AVDISCARD_ALL)
         return res;
     if (!duration)
-        duration = track->default_duration / matroska->time_scale;
+        duration = track->default_duration;
+    else
+        duration *= matroska->time_scale;
 
     block_time = AV_RB16(data);
     data += 2;
@@ -1754,7 +1756,7 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
             is_keyframe = 0;  /* overlapping subtitles are not key frame */
         if (is_keyframe)
             av_add_index_entry(st, cluster_pos, timecode, 0,0,AVINDEX_KEYFRAME);
-        track->end_timecode = FFMAX(track->end_timecode, timecode+duration);
+        track->end_timecode = FFMAX(track->end_timecode, timecode+(duration / matroska->time_scale));
     }
 
     if (matroska->skip_to_keyframe && track->type != MATROSKA_TRACK_TYPE_SUBTITLE) {
@@ -1762,6 +1764,11 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
             return res;
         matroska->skip_to_keyframe = 0;
     }
+
+    // Enhance timecode tracking precision
+    if (timecode != AV_NOPTS_VALUE)
+        timecode *= matroska->time_scale;
+    #define TIMECODE_UNSCALED (timecode != AV_NOPTS_VALUE ? timecode / matroska->time_scale : AV_NOPTS_VALUE)
 
     switch ((flags & 0x06) >> 1) {
         case 0x0: /* no lacing */
@@ -1856,7 +1863,7 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
 
                 if (!track->audio.pkt_cnt) {
                     if (track->audio.sub_packet_cnt == 0)
-                        track->audio.buf_timecode = timecode;
+                        track->audio.buf_timecode = TIMECODE_UNSCALED;
                     if (st->codec->codec_id == CODEC_ID_RA_288)
                         for (x=0; x<h/2; x++)
                             memcpy(track->audio.buf+x*2*w+y*cfs,
@@ -1920,14 +1927,14 @@ static int matroska_parse_block(MatroskaDemuxContext *matroska, uint8_t *data,
                 pkt->stream_index = st->index;
 
                 if (track->ms_compat)
-                    pkt->dts = timecode;
+                    pkt->dts = TIMECODE_UNSCALED;
                 else
-                    pkt->pts = timecode;
+                    pkt->pts = TIMECODE_UNSCALED;
                 pkt->pos = pos;
                 if (track->type == MATROSKA_TRACK_TYPE_SUBTITLE)
-                    pkt->convergence_duration = duration;
+                    pkt->convergence_duration = duration / matroska->time_scale;
                 else
-                    pkt->duration = duration;
+                    pkt->duration = duration / matroska->time_scale;
 
                 dynarray_add(&matroska->packets,&matroska->num_packets,pkt);
                 matroska->prev_pkt = pkt;
