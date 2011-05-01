@@ -220,7 +220,7 @@ static int spdif_header_dts4(AVFormatContext *s, AVPacket *pkt, int core_size,
     }
 
     ctx->out_bytes   = sizeof(dtshd_start_code) + 2 + pkt_size;
-    ctx->length_code = ctx->out_bytes;
+    ctx->length_code = (pkt_size & ~0xf) + 0x18;
 
     av_fast_malloc(&ctx->hd_buf, &ctx->hd_buf_size, ctx->out_bytes);
     if (!ctx->hd_buf)
