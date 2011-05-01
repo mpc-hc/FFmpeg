@@ -533,8 +533,8 @@ static int spdif_write_packet(struct AVFormatContext *s, AVPacket *pkt)
 
     ffio_fill(s->pb, 0, padding);
 
-    av_log(s, AV_LOG_DEBUG, "type=%x len=%i pkt_offset=%i\n",
-           ctx->data_type, ctx->out_bytes, ctx->pkt_offset);
+    /*av_log(s, AV_LOG_DEBUG, "type=%x len=%i pkt_offset=%i\n",
+           ctx->data_type, ctx->out_bytes, ctx->pkt_offset); */
 
     avio_flush(s->pb);
     return 0;
