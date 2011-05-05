@@ -1601,6 +1601,7 @@ int av_seek_frame_binary(AVFormatContext *s, int stream_index, int64_t target_ts
 int64_t av_gen_search(AVFormatContext *s, int stream_index, int64_t target_ts, int64_t pos_min, int64_t pos_max, int64_t pos_limit, int64_t ts_min, int64_t ts_max, int flags, int64_t *ts_ret, int64_t (*read_timestamp)(struct AVFormatContext *, int , int64_t *, int64_t )){
     int64_t pos, ts;
     int64_t start_pos, filesize;
+    int64_t wrap = s->streams[stream_index]->pts_wrap_bits > 0 && s->streams[stream_index]->pts_wrap_bits < 63 ? 1LL << s->streams[stream_index]->pts_wrap_bits : 0;
     int no_change;
 
     av_dlog(s, "gen_seek: %d %"PRId64"\n", stream_index, target_ts);
@@ -1638,7 +1639,10 @@ int64_t av_gen_search(AVFormatContext *s, int stream_index, int64_t target_ts, i
     }
 
     if(ts_min > ts_max){
-        return -1;
+        ts_max += wrap;
+        if(ts_min > ts_max){
+            return -1;
+        }
     }else if(ts_min == ts_max){
         pos_limit= pos_min;
     }
@@ -1669,6 +1673,7 @@ int64_t av_gen_search(AVFormatContext *s, int stream_index, int64_t target_ts, i
         start_pos= pos;
 
         ts = read_timestamp(s, stream_index, &pos, INT64_MAX); //may pass pos_limit instead of -1
+        if (ts != AV_NOPTS_VALUE && ts < ts_min) ts += wrap;
         if(pos == pos_max)
             no_change++;
         else
