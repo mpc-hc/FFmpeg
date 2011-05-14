@@ -536,6 +536,7 @@ static const StreamType ISO_types[] = {
 };
 
 static const StreamType HDMV_types[] = {
+    { 0x20, AVMEDIA_TYPE_VIDEO, CODEC_ID_H264 },
     { 0x80, AVMEDIA_TYPE_AUDIO, CODEC_ID_PCM_BLURAY },
     { 0x81, AVMEDIA_TYPE_AUDIO, CODEC_ID_AC3 },
     { 0x82, AVMEDIA_TYPE_AUDIO, CODEC_ID_DTS },
