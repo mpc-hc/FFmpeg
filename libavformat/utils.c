@@ -993,7 +993,7 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
         presentation_delayed = 1;
 
     if(pkt->pts != AV_NOPTS_VALUE && pkt->dts != AV_NOPTS_VALUE && pkt->dts > pkt->pts && st->pts_wrap_bits<63
-       /*&& pkt->dts-(1LL<<st->pts_wrap_bits) < pkt->pts*/){
+       && pkt->dts-(1LL<<st->pts_wrap_bits) <= pkt->pts){
         pkt->dts -= 1LL<<st->pts_wrap_bits;
     }
 
