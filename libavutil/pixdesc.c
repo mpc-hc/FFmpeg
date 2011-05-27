@@ -996,6 +996,11 @@ int av_get_bits_per_pixel(const AVPixFmtDescriptor *pixdesc)
     return bits >> log2_pixels;
 }
 
+int av_get_bits_per_pixel2(enum PixelFormat pix_fmt)
+{
+    return av_get_bits_per_pixel(&av_pix_fmt_descriptors[pix_fmt]);
+}
+
 char *av_get_pix_fmt_string (char *buf, int buf_size, enum PixelFormat pix_fmt)
 {
     /* print header */
