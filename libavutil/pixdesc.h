@@ -171,5 +171,6 @@ char *av_get_pix_fmt_string (char *buf, int buf_size, enum PixelFormat pix_fmt);
  * not counted.
  */
 int av_get_bits_per_pixel(const AVPixFmtDescriptor *pixdesc);
+int av_get_bits_per_pixel2(enum PixelFormat pix_fmt);
 
 #endif /* AVUTIL_PIXDESC_H */
