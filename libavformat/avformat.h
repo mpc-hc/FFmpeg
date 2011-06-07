@@ -788,6 +788,8 @@ typedef struct AVFormatContext {
 #define AVFMT_FLAG_PRIV_OPT    0x20000 ///< Enable use of private options by delaying codec open (this could be made default once all code is converted)
 #define AVFMT_FLAG_KEEP_SIDE_DATA 0x40000 ///< Dont merge side data but keep it seperate.
 
+#define AVFMT_FLAG_IGNPARSERSYNC  0x80000000 ///< Don't use the parser syncing code
+
 #if FF_API_LOOP_INPUT
     /**
      * @deprecated, use the 'loop' img2 demuxer private option.
