@@ -1572,7 +1572,7 @@ static int parse_timestamp(int64_t *ts, const uint8_t *buf)
         *ts = ff_parse_pes_pts(p+9);
         return 0;
     } else if ((flags & 0xc0) == 0xc0) {
-        *ts = ff_parse_pes_pts(p+9+5);
+        *ts = ff_parse_pes_pts(p+9);
         return 0;
     }
     return -1;
