@@ -1039,7 +1039,7 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
             pkt->dts += offset;
     }
 
-    if (pc && pc->dts_sync_point >= 0) {
+    if (!(s->flags & AVFMT_FLAG_IGNPARSERSYNC) && pc && pc->dts_sync_point >= 0) {
         // we have synchronization info from the parser
         int64_t den = st->codec->time_base.den * (int64_t) st->time_base.num;
         if (den > 0) {
