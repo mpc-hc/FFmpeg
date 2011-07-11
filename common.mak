@@ -98,13 +98,6 @@ $(HOSTOBJS): %.o: %.c
 $(HOSTPROGS): %$(HOSTEXESUF): %.o
 	$(HOSTCC) $(HOSTLDFLAGS) -o $@ $< $(HOSTLIBS)
 
-$(OBJS):     | $(sort $(dir $(OBJS)))
-$(HOSTOBJS): | $(sort $(dir $(HOSTOBJS)))
-$(TESTOBJS): | $(sort $(dir $(TESTOBJS)))
-$(TOOLOBJS): | tools
-
-OBJDIRS := $(OBJDIRS) $(dir $(OBJS) $(HOSTOBJS) $(TESTOBJS))
-
 CLEANSUFFIXES     = *.d *.o *~ *.ho *.map *.ver
 DISTCLEANSUFFIXES = *.pc
 LIBSUFFIXES       = *.a *.lib *.so *.so.* *.dylib *.dll *.def *.dll.a *.exp
