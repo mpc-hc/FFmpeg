@@ -947,9 +947,9 @@ apply(){
 }
 
 cp_if_changed(){
-    cmp -s "$1" "$2" && echo "$2 is unchanged" && return
-    mkdir -p "$(dirname $2)"
-    cp -f "$1" "$2"
+    cmp -s "$1" "$2" &&
+        echo "$2 is unchanged" ||
+        cp -f "$1" "$2"
 }
 
 # CONFIG_LIST contains configurable options, while HAVE_LIST is for
@@ -1815,8 +1815,10 @@ DEPFLAGS='$(CPPFLAGS) $(CFLAGS) -MM'
 # find source path
 if test -f configure; then
     source_path=.
+    disable source_path_used
 else
     source_path=$(cd $(dirname "$0"); pwd)
+    enable source_path_used
     echo "$source_path" | grep -q '[[:blank:]]' &&
         die "Out of tree builds are impossible with whitespace in source path."
     test -e "$source_path/config.h" &&
@@ -3402,7 +3404,27 @@ echo "License: $license"
 
 echo "Creating config.mak and config.h..."
 
-test -e Makefile || $ln_s "$source_path/Makefile" .
+# build tree in object directory if source path is different from current one
+if enabled source_path_used; then
+    DIRS="
+        doc
+        libavcodec
+        libavcodec/$arch
+        libavdevice
+        libavfilter
+        libavfilter/$arch
+        libavformat
+        libavutil
+        libavutil/$arch
+        libpostproc
+        libswscale
+        libswscale/$arch
+        tests
+        tools
+    "
+    map 'mkdir -p $v' $DIRS;
+    $ln_s "$source_path/Makefile" .
+fi
 
 enabled stripping || strip="echo skipping strip"
 
@@ -3600,7 +3622,6 @@ version=$3
 libs=$4
 requires=$5
 enabled ${name#lib} || return 0
-mkdir -p $name
 cat <<EOF > $name/$name.pc
 prefix=$prefix
 exec_prefix=\${prefix}
