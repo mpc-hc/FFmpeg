@@ -88,8 +88,6 @@ ffserver_g$(EXESUF): LDFLAGS += $(FFSERVERLDFLAGS)
 %$(PROGSSUF)_g$(EXESUF): %.o cmdutils.o $(FF_DEP_LIBS)
 	$(LD) $(LDFLAGS) -o $@ $< cmdutils.o $(FF_EXTRALIBS)
 
-OBJDIRS += tools
-
 -include $(wildcard tools/*.d)
 
 VERSION_SH  = $(SRC_PATH)/version.sh
@@ -158,9 +156,6 @@ coverage-html: coverage.info
 
 include $(SRC_PATH)/doc/Makefile
 include $(SRC_PATH)/tests/Makefile
-
-$(sort $(OBJDIRS)):
-	$(Q)mkdir -p $@
 
 # Dummy rule to stop make trying to rebuild removed or renamed headers
 %.h:
