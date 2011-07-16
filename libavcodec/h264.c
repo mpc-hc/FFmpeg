@@ -3655,7 +3655,7 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size){
         }
 
         if (h->is_avc && (nalsize != consumed) && nalsize){
-            av_log(h->s.avctx, AV_LOG_DEBUG, "AVC: Consumed only %d bytes instead of %d\n", consumed, nalsize);
+            //av_log(h->s.avctx, AV_LOG_DEBUG, "AVC: Consumed only %d bytes instead of %d\n", consumed, nalsize);
         }
 
         buf_index += consumed;
