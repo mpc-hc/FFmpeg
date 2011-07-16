@@ -70,27 +70,12 @@ void  free(void *ptr);
 void *av_malloc(size_t size)
 {
     void *ptr = NULL;
-#if CONFIG_MEMALIGN_HACK
-    long diff;
-#endif
 
     /* let's disallow possible ambiguous cases */
     if (size > (MAX_MALLOC_SIZE-32))
         return NULL;
 
-#if CONFIG_MEMALIGN_HACK
-    ptr = malloc(size+ALIGN);
-    if(!ptr)
-        return ptr;
-    diff= ((-(long)ptr - 1)&(ALIGN-1)) + 1;
-    ptr = (char*)ptr + diff;
-    ((char*)ptr)[-1]= diff;
-#elif HAVE_POSIX_MEMALIGN
-    if (size) //OSX on SDK 10.6 has a broken posix_memalign implementation
-    if (posix_memalign(&ptr,ALIGN,size))
-        ptr = NULL;
-#elif HAVE_MEMALIGN
-    ptr = memalign(ALIGN,size);
+    ptr = __mingw_aligned_malloc(size, ALIGN);
     /* Why 64?
        Indeed, we should align it:
          on 4 for 386
@@ -115,9 +100,6 @@ void *av_malloc(size_t size)
 
         BTW, malloc seems to do 8-byte alignment by default here.
      */
-#else
-    ptr = malloc(size);
-#endif
     if(!ptr && !size)
         ptr= av_malloc(1);
     return ptr;
@@ -125,32 +107,16 @@ void *av_malloc(size_t size)
 
 void *av_realloc(void *ptr, size_t size)
 {
-#if CONFIG_MEMALIGN_HACK
-    int diff;
-#endif
-
     /* let's disallow possible ambiguous cases */
     if (size > (MAX_MALLOC_SIZE-16))
         return NULL;
 
-#if CONFIG_MEMALIGN_HACK
-    //FIXME this isn't aligned correctly, though it probably isn't needed
-    if(!ptr) return av_malloc(size);
-    diff= ((char*)ptr)[-1];
-    return (char*)realloc((char*)ptr - diff, size + diff) + diff;
-#else
-    return realloc(ptr, size + !size);
-#endif
+    return __mingw_aligned_realloc(ptr, size, ALIGN);
 }
 
 void av_free(void *ptr)
 {
-#if CONFIG_MEMALIGN_HACK
-    if (ptr)
-        free((char*)ptr - ((char*)ptr)[-1]);
-#else
-    free(ptr);
-#endif
+    __mingw_aligned_free(ptr);
 }
 
 void av_freep(void *arg)
