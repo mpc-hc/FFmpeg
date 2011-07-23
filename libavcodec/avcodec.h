@@ -1354,6 +1354,12 @@ typedef struct AVFrame {
      */
     int64_t pkt_pos;
 
+    /* ffdshow custom code (begin) */
+    int h264_poc_decoded;
+    int h264_poc_outputed;
+    int h264_frame_num_decoded;
+    int h264_max_frame_num;
+     /* ffdshow custom code (end) */
 } AVFrame;
 
 struct AVCodecInternal;
