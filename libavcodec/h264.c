@@ -4985,6 +4985,15 @@ not_extra:
 
     assert(pict->data[0] || !*got_frame);
 
+    /* ffdshow custom code (begin) */
+    pict->h264_poc_decoded = h->poc_lsb + h->poc_msb;
+    if (h->next_output_pic)
+        pict->h264_poc_outputed = h->next_output_pic->poc;
+    else
+        pict->h264_poc_outputed = INT_MIN;
+    pict->h264_frame_num_decoded = h-> frame_num;
+    pict->h264_max_frame_num = 1 << h->sps.log2_max_frame_num;
+    /* ffdshow custom code (end) */
     return get_consumed_bytes(buf_index, buf_size);
 }
 

@@ -436,6 +436,13 @@ typedef struct AVFrame {
      * Not to be accessed directly from outside libavutil
      */
     AVBufferRef *qp_table_buf;
+
+    /* ffdshow custom code (begin) */
+    int h264_poc_decoded;
+    int h264_poc_outputed;
+    int h264_frame_num_decoded;
+    int h264_max_frame_num;
+     /* ffdshow custom code (end) */
 } AVFrame;
 
 /**
