@@ -1494,6 +1494,13 @@ typedef struct AVFrame {
      * - decoding: set by libavcodec, read by user.
      */
     int pkt_size;
+
+    /* ffdshow custom code (begin) */
+    int h264_poc_decoded;
+    int h264_poc_outputed;
+    int h264_frame_num_decoded;
+    int h264_max_frame_num;
+     /* ffdshow custom code (end) */
 } AVFrame;
 
 /**
