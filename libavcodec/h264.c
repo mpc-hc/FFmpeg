@@ -1452,6 +1452,8 @@ int ff_h264_decode_extradata(H264Context *h, const uint8_t *buf, int size)
     return size;
 }
 
+static enum PixelFormat get_pixel_format(H264Context *h, int force_callback);
+
 av_cold int ff_h264_decode_init(AVCodecContext *avctx)
 {
     H264Context *h = avctx->priv_data;
@@ -1525,6 +1527,11 @@ av_cold int ff_h264_decode_init(AVCodecContext *avctx)
         ff_h264_free_context(h);
         return -1;
     }
+
+    h->avctx->pix_fmt = get_pixel_format(h, 1);
+    h->avctx->profile = ff_h264_get_profile(&h->sps);
+    h->avctx->level   = h->sps.level_idc;
+    h->avctx->refs    = h->sps.ref_frame_count;
 
     if (h->sps.bitstream_restriction_flag &&
         h->avctx->has_b_frames < h->sps.num_reorder_frames) {
