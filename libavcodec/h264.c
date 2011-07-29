@@ -1072,6 +1072,18 @@ av_cold int ff_h264_decode_init(AVCodecContext *avctx){
         ff_h264_decode_extradata(h))
         return -1;
 
+    switch (h->sps.bit_depth_luma) {
+        case 9 :
+            avctx->pix_fmt = CHROMA444 ? PIX_FMT_YUV444P9 : PIX_FMT_YUV420P9;
+            break;
+        case 10 :
+            avctx->pix_fmt = CHROMA444 ? PIX_FMT_YUV444P10 : PIX_FMT_YUV420P10;
+            break;
+        default:
+            avctx->pix_fmt = CHROMA444 ? PIX_FMT_YUV444P : PIX_FMT_YUV420P;
+            break;
+    }
+
     if(h->sps.bitstream_restriction_flag && s->avctx->has_b_frames < h->sps.num_reorder_frames){
         s->avctx->has_b_frames = h->sps.num_reorder_frames;
         s->low_delay = 0;
