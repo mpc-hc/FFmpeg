@@ -1106,6 +1106,27 @@ av_cold int ff_h264_decode_init(AVCodecContext *avctx)
         return -1;
     }
 
+    switch (h->sps.bit_depth_luma) {
+        case 9 :
+            s->avctx->pix_fmt = CHROMA444 ? (h->sps.colorspace == AVCOL_SPC_RGB ? PIX_FMT_GBRP9 : PIX_FMT_YUV444P9)  : CHROMA422 ? PIX_FMT_YUV422P9 : PIX_FMT_YUV420P9;
+            break;
+        case 10 :
+            s->avctx->pix_fmt = CHROMA444 ? (h->sps.colorspace == AVCOL_SPC_RGB ? PIX_FMT_GBRP10 : PIX_FMT_YUV444P10)  : CHROMA422 ? PIX_FMT_YUV422P10 : PIX_FMT_YUV420P10;
+            break;
+        case 12 :
+            s->avctx->pix_fmt = CHROMA444 ? (h->sps.colorspace == AVCOL_SPC_RGB ? PIX_FMT_GBRP12 : PIX_FMT_YUV444P10)  : CHROMA422 ? PIX_FMT_YUV422P12 : PIX_FMT_YUV420P12;
+            break;
+        case 14 :
+            s->avctx->pix_fmt = CHROMA444 ? (h->sps.colorspace == AVCOL_SPC_RGB ? PIX_FMT_GBRP14 : PIX_FMT_YUV444P14)  : CHROMA422 ? PIX_FMT_YUV422P14 : PIX_FMT_YUV420P14;
+            break;
+        default:
+            s->avctx->pix_fmt = CHROMA444 ? (h->sps.colorspace == AVCOL_SPC_RGB ? PIX_FMT_GBRP : PIX_FMT_YUV444P) : CHROMA422 ? PIX_FMT_YUV422P : PIX_FMT_YUV420P;
+    }
+
+    s->avctx->profile = ff_h264_get_profile(&h->sps);
+    s->avctx->level   = h->sps.level_idc;
+    s->avctx->refs    = h->sps.ref_frame_count;
+
     if (h->sps.bitstream_restriction_flag &&
         s->avctx->has_b_frames < h->sps.num_reorder_frames) {
         s->avctx->has_b_frames = h->sps.num_reorder_frames;
