@@ -8,6 +8,7 @@ version next:
 - BWF muxer
 - Flash Screen Video 2 decoder
 - lavfi input device added
+- LOAS demuxer
 - added avconv, which is almost the same for now, except
 for a few incompatible changes in the options, which will hopefully make them
 easier to use. The changes are:
