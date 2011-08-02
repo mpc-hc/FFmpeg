@@ -3677,8 +3677,6 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size){
             switch (hx->nal_unit_type) {
                 case NAL_SPS:
                 case NAL_PPS:
-                case NAL_IDR_SLICE:
-                case NAL_SLICE:
                     nals_needed = nal_index;
             }
             continue;
