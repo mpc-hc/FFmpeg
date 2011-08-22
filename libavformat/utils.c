@@ -1202,7 +1202,7 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
             pkt->dts += offset;
     }
 
-    if (pc && pc->dts_sync_point >= 0) {
+    if (pc && pc->dts_sync_point >= 0 && !(pc->flags & PARSER_FLAG_NO_TIMESTAMP_MANGLING)) {
         // we have synchronization info from the parser
         int64_t den = st->codec->time_base.den * (int64_t) st->time_base.num;
         if (den > 0) {
@@ -1229,7 +1229,7 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
            presentation_delayed, av_ts2str(pkt->pts), av_ts2str(pkt->dts), av_ts2str(st->cur_dts), pkt->stream_index, pc, pkt->duration);
     /* interpolate PTS and DTS if they are not present */
     //We skip H264 currently because delay and has_b_frames are not reliably set
-    if((delay==0 || (delay==1 && pc)) && st->codec->codec_id != AV_CODEC_ID_H264){
+    if((delay==0 || (delay==1 && pc && !(pc->flags & PARSER_FLAG_NO_TIMESTAMP_MANGLING))) && st->codec->codec_id != AV_CODEC_ID_H264){
         if (presentation_delayed) {
             /* DTS = decompression timestamp */
             /* PTS = presentation timestamp */
