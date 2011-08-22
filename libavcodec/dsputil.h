@@ -658,7 +658,7 @@ void ff_mlp_init_x86(DSPContext* c, AVCodecContext *avctx);
 #endif
 
 #ifndef STRIDE_ALIGN
-#   define STRIDE_ALIGN 8
+#   define STRIDE_ALIGN 16
 #endif
 
 #define LOCAL_ALIGNED_A(a, t, v, s, o, ...)             \
