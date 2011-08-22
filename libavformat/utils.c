@@ -1065,7 +1065,7 @@ static void compute_pkt_fields(AVFormatContext *s, AVStream *st,
 //    av_log(NULL, AV_LOG_DEBUG, "IN delayed:%d pts:%"PRId64", dts:%"PRId64" cur_dts:%"PRId64" st:%d pc:%p\n", presentation_delayed, pkt->pts, pkt->dts, st->cur_dts, pkt->stream_index, pc);
     /* interpolate PTS and DTS if they are not present */
     //We skip H264 currently because delay and has_b_frames are not reliably set
-    if((delay==0 || (delay==1 && pc)) && st->codec->codec_id != CODEC_ID_H264){
+    if((delay==0 || (delay==1 && pc && !(pc->flags & PARSER_FLAG_NO_TIMESTAMP_MANGLING))) && st->codec->codec_id != CODEC_ID_H264){
         if (presentation_delayed) {
             /* DTS = decompression timestamp */
             /* PTS = presentation timestamp */
