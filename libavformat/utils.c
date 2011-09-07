@@ -1991,6 +1991,7 @@ static void estimate_timings_from_pts(AVFormatContext *ic, int64_t old_offset)
     int64_t end_time;
     int64_t filesize, offset, duration;
     int retry=0;
+    int wrapped=0;
 
     ic->cur_st = NULL;
 
@@ -2039,8 +2040,12 @@ static void estimate_timings_from_pts(AVFormatContext *ic, int64_t old_offset)
                     duration -= st->start_time;
                 else
                     duration -= st->first_dts;
-                if (duration < 0)
+                /* check if the duration might have wrapped around
+                   only accept at the first timestamp, or when we saw wraps elsewhere */
+                if (duration < 0 && (st->duration == AV_NOPTS_VALUE || wrapped)) {
                     duration += 1LL<<st->pts_wrap_bits;
+                    wrapped = 1;
+                }
                 if (duration > 0) {
                     if (st->duration == AV_NOPTS_VALUE || st->duration < duration)
                         st->duration = duration;
