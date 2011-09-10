@@ -83,6 +83,7 @@
 #include "avcodec.h"
 #include "internal.h"
 #include "get_bits.h"
+#include "put_bits.h"
 #include "dsputil.h"
 #include "fft.h"
 #include "fmtconvert.h"
@@ -2284,6 +2285,20 @@ static av_cold int aac_decode_close(AVCodecContext *avctx)
 {
     AACContext *ac = avctx->priv_data;
     int i, type;
+
+    if (!avctx->extradata_size && ac->m4ac.object_type) {
+        avctx->extradata = av_mallocz(2);
+        avctx->extradata_size = 2;
+        PutBitContext pb;
+        init_put_bits(&pb, avctx->extradata, avctx->extradata_size);
+        put_bits(&pb, 5, ac->m4ac.object_type);
+        put_bits(&pb, 4, ac->m4ac.sampling_index);
+        put_bits(&pb, 4, ac->m4ac.chan_config);
+        put_bits(&pb, 1, 0); //frame length - 1024 samples
+        put_bits(&pb, 1, 0); //does not depend on core coder
+        put_bits(&pb, 1, 0); //is not extension
+        flush_put_bits(&pb);
+    }
 
     for (i = 0; i < MAX_ELEM_ID; i++) {
         for (type = 0; type < 4; type++) {
