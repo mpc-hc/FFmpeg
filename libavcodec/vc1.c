@@ -800,39 +800,43 @@ int vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
 {
     int pqindex, lowquant;
     int status;
+    int fieldmode = 0;
 
     v->p_frame_skipped = 0;
 
     if(v->interlace){
         v->fcm = decode012(gb);
-        if(v->fcm == 2){
-            if(!v->warn_interlaced++)
-                av_log(v->s.avctx, AV_LOG_ERROR, "Interlaced fields support is not implemented\n");
-            return -1;
-        }
+        if(v->fcm == 2) fieldmode = 1;
     }
-    switch(get_unary(gb, 0, 4)) {
-    case 0:
-        v->s.pict_type = AV_PICTURE_TYPE_P;
-        break;
-    case 1:
-        v->s.pict_type = AV_PICTURE_TYPE_B;
-        break;
-    case 2:
-        v->s.pict_type = AV_PICTURE_TYPE_I;
-        break;
-    case 3:
-        v->s.pict_type = AV_PICTURE_TYPE_BI;
-        break;
-    case 4:
-        v->s.pict_type = AV_PICTURE_TYPE_P; // skipped pic
-        v->p_frame_skipped = 1;
-        break;
+    if (fieldmode) {
+        int fieldtype = get_bits(gb, 3);
+        v->s.pict_type = (fieldtype & 2) ? AV_PICTURE_TYPE_P : AV_PICTURE_TYPE_I;
+        if (fieldtype & 4) // B-picture
+            v->s.pict_type = (fieldtype & 2) ? AV_PICTURE_TYPE_BI : AV_PICTURE_TYPE_B;
+    } else {
+        switch(get_unary(gb, 0, 4)) {
+        case 0:
+            v->s.pict_type = AV_PICTURE_TYPE_P;
+            break;
+        case 1:
+            v->s.pict_type = AV_PICTURE_TYPE_B;
+            break;
+        case 2:
+            v->s.pict_type = AV_PICTURE_TYPE_I;
+            break;
+        case 3:
+            v->s.pict_type = AV_PICTURE_TYPE_BI;
+            break;
+        case 4:
+            v->s.pict_type = AV_PICTURE_TYPE_P; // skipped pic
+            v->p_frame_skipped = 1;
+            break;
+        }
     }
 
     if(v->interlace && v->fcm){
         if(!v->warn_interlaced++)
-            av_log(v->s.avctx, AV_LOG_ERROR, "Interlaced frames support is not implemented\n");
+            av_log(v->s.avctx, AV_LOG_ERROR, "Interlaced frames/fields support is not implemented\n");
         return -1;
     }
 
