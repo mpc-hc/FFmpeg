@@ -1673,7 +1673,9 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
             max_start = chapters[i].start;
         }
 
-    matroska_add_index_entries(matroska);
+    /* process cue elements */
+    matroska_parse_cues(matroska);
+    matroska->cues_parsing_deferred = 0;
 
     matroska_convert_tags(s);
 
