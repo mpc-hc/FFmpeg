@@ -4434,6 +4434,18 @@ enum AVLockOp {
 int av_lockmgr_register(int (*cb)(void **mutex, enum AVLockOp op));
 
 /**
+ * Increase the reference count of the lock mgr
+ * @return the new ref count
+ */
+int av_lockmgr_addref(void);
+
+/**
+ * Decrease the reference count of the lock mgr
+ * @return the new ref count
+ */
+int av_lockmgr_release(void);
+
+/**
  * Get the type of the given codec.
  */
 enum AVMediaType avcodec_get_type(enum CodecID codec_id);
