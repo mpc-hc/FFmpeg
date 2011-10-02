@@ -49,6 +49,7 @@ static int volatile entangled_thread_counter=0;
 static int (*ff_lockmgr_cb)(void **mutex, enum AVLockOp op);
 static void *codec_mutex;
 static void *avformat_mutex;
+static int volatile lockmgr_ref_counter=0;
 
 void *av_fast_realloc(void *ptr, unsigned int *size, size_t min_size)
 {
@@ -1410,6 +1411,18 @@ int avpriv_unlock_avformat(void)
             return -1;
     }
     return 0;
+}
+
+int av_lockmgr_addref(void)
+{
+    lockmgr_ref_counter++;
+    return lockmgr_ref_counter;
+}
+
+int av_lockmgr_release(void)
+{
+    lockmgr_ref_counter--;
+    return lockmgr_ref_counter;
 }
 
 unsigned int avpriv_toupper4(unsigned int x)
