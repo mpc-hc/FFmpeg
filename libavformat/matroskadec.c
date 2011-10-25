@@ -180,6 +180,7 @@ typedef struct {
     char    *title;
 
     AVChapter *chapter;
+    EbmlList subchapters;
 } MatroskaChapter;
 
 typedef struct {
@@ -421,7 +422,7 @@ static EbmlSyntax matroska_chapter_entry[] = {
     { MATROSKA_ID_CHAPTERFLAGHIDDEN,  EBML_NONE },
     { MATROSKA_ID_CHAPTERFLAGENABLED, EBML_NONE },
     { MATROSKA_ID_CHAPTERPHYSEQUIV,   EBML_NONE },
-    { MATROSKA_ID_CHAPTERATOM,        EBML_NONE },
+    { MATROSKA_ID_CHAPTERATOM,        EBML_NEST, sizeof(MatroskaChapter), offsetof(MatroskaChapter,subchapters), {.n=matroska_chapter_entry} },
     { 0 }
 };
 
@@ -1661,7 +1662,26 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
     }
 
     chapters = chapters_list->elem;
-    for (i=0; i<chapters_list->nb_elem; i++)
+    for (i=0; i<chapters_list->nb_elem; i++) {
+        /* insert sub-chapters into the main chapter list, so we don't need to parse them individually */
+        if (chapters[i].subchapters.nb_elem > 0) {
+            int nb_elem = chapters_list->nb_elem + chapters[i].subchapters.nb_elem;
+            void *newelem = av_realloc(chapters_list->elem, sizeof(MatroskaChapter)*nb_elem);
+            if (!newelem)
+                return AVERROR(ENOMEM);
+            chapters = chapters_list->elem = newelem;
+
+            /* move old chapters to the end of the list */
+            memmove(&chapters[i+chapters[i].subchapters.nb_elem+1], &chapters[i+1],
+                    sizeof(MatroskaChapter)*(chapters_list->nb_elem - i - 1));
+            /* copy sub-chapters in */
+            memcpy(&chapters[i+1], chapters[i].subchapters.elem,
+                    sizeof(MatroskaChapter)*chapters[i].subchapters.nb_elem);
+
+            av_freep(&chapters[i].subchapters.elem);
+            chapters[i].subchapters.nb_elem = 0;
+            chapters_list->nb_elem = nb_elem;
+        }
         if (chapters[i].start != AV_NOPTS_VALUE && chapters[i].uid
             && (max_start==0 || chapters[i].start > max_start)) {
             chapters[i].chapter =
@@ -1672,6 +1692,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
                              "title", chapters[i].title, 0);
             max_start = chapters[i].start;
         }
+    }
 
     /* process cue elements */
     matroska_parse_cues(matroska);
