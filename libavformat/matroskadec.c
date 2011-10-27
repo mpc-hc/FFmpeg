@@ -181,6 +181,7 @@ typedef struct {
 
     AVChapter *chapter;
     EbmlList subchapters;
+    int level;
 } MatroskaChapter;
 
 typedef struct {
@@ -1316,7 +1317,7 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
     EbmlList *attachements_list = &matroska->attachments;
     MatroskaAttachement *attachements;
     EbmlList *chapters_list = &matroska->chapters;
-    MatroskaChapter *chapters;
+    MatroskaChapter *chapters, *subchapters;
     MatroskaTrack *tracks;
     uint64_t max_start = 0;
     Ebml ebml = { 0 };
@@ -1671,6 +1672,11 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
                 return AVERROR(ENOMEM);
             chapters = chapters_list->elem = newelem;
 
+            /* set level on the sub chapters */
+            subchapters = chapters[i].subchapters.elem;
+            for(j=0; j<chapters[i].subchapters.nb_elem; j++)
+                subchapters[j].level = chapters[i].level+1;
+
             /* move old chapters to the end of the list */
             memmove(&chapters[i+chapters[i].subchapters.nb_elem+1], &chapters[i+1],
                     sizeof(MatroskaChapter)*(chapters_list->nb_elem - i - 1));
@@ -1688,8 +1694,17 @@ static int matroska_read_header(AVFormatContext *s, AVFormatParameters *ap)
             avpriv_new_chapter(s, chapters[i].uid, (AVRational){1, 1000000000},
                            chapters[i].start, chapters[i].end,
                            chapters[i].title);
-            av_dict_set(&chapters[i].chapter->metadata,
-                             "title", chapters[i].title, 0);
+
+            if (chapters[i].level && chapters[i].title) {
+                char *title = av_mallocz(chapters[i].level+strlen(chapters[i].title)+2);
+                if (!title)
+                    return AVERROR(ENOMEM);
+                memset(title, '+', chapters[i].level);
+                title[chapters[i].level] = ' ';
+                memcpy(&title[chapters[i].level+1], chapters[i].title, strlen(chapters[i].title));
+                av_dict_set(&chapters[i].chapter->metadata, "title", title, 0);
+                av_free(title);
+            }
             max_start = chapters[i].start;
         }
     }
