@@ -902,6 +902,10 @@ int ff_vc1_parse_frame_header_adv(VC1Context *v, GetBitContext* gb)
             v->rff = get_bits1(gb);
         }
     }
+
+    if (v->interlace && v->fcm != PROGRESSIVE && !v->s.avctx->hwaccel)
+        return -1;
+
     if (v->panscanflag) {
         av_log_missing_feature(v->s.avctx, "Pan-scan", 0);
         //...
