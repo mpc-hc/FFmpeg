@@ -1,5 +1,14 @@
 LIBAVFORMAT_$MAJOR {
         global: av*;
+                #for external demuxer in LAV Splitter
+                ff_codec_bmp_tags;
+                ff_codec_wav_tags;
+                ff_mkv_codec_tags;
+                ff_mkv_mime_tags;
+                ff_sipr_subpk_size;
+                codec_movvideo_tags;
+                ff_get_wav_header;
+                ff_codec_get_id;
                 #FIXME those are for avserver
                 ff_inet_aton;
                 ff_socket_nonblock;
