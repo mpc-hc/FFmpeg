@@ -490,6 +490,9 @@ static int decode_frame(AVCodecContext *avctx, void *data, int *data_size, AVPac
         break;
     }
 
+    if (c->interlaced)
+        c->pic.interlaced_frame = 1;
+
     *data_size = sizeof(AVFrame);
     *(AVFrame*)data = c->pic;
 
