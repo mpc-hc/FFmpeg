@@ -157,7 +157,7 @@ typedef struct FrameThreadContext {
 
 /* H264 slice threading seems to be buggy with more than 16 threads,
  * limit the number of threads to 16 for automatic detection */
-#define MAX_AUTO_THREADS 16
+#define MAX_AUTO_THREADS 1
 
 int ff_get_logical_cpus(AVCodecContext *avctx)
 {
