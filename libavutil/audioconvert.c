@@ -71,6 +71,8 @@ static const struct {
     { "5.0",         5,  AV_CH_LAYOUT_5POINT0 },
     { "5.1",         6,  AV_CH_LAYOUT_5POINT1_BACK },
     { "5.1",         6,  AV_CH_LAYOUT_5POINT1 },
+    { "6.1",         7,  AV_CH_LAYOUT_6POINT1_BACK },
+    { "6.1",         7,  AV_CH_LAYOUT_6POINT1 },
     { "7.1",         8,  AV_CH_LAYOUT_7POINT1 },
     { "7.1",         8,  AV_CH_LAYOUT_7POINT1_WIDE },
     { "downmix",     2,  AV_CH_LAYOUT_STEREO_DOWNMIX, },
