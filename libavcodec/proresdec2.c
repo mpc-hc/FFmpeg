@@ -77,6 +77,27 @@ static av_cold int decode_init(AVCodecContext *avctx)
     ctx->frame.type = AV_PICTURE_TYPE_I;
     ctx->frame.key_frame = 1;
 
+    switch (avctx->codec_tag) {
+    case MKTAG('a', 'p', 'c', 'h'):
+        avctx->pix_fmt = PIX_FMT_YUV422P10;
+        break;
+    case MKTAG('a', 'p', 'c', 'n'):
+        avctx->pix_fmt = PIX_FMT_YUV422P10;
+        break;
+    case MKTAG('a', 'p', 'c', 's'):
+        avctx->pix_fmt = PIX_FMT_YUV422P10;
+        break;
+    case MKTAG('a', 'p', 'c', 'o'):
+        avctx->pix_fmt = PIX_FMT_YUV422P10;
+        break;
+    case MKTAG('a', 'p', '4', 'h'):
+        avctx->pix_fmt = PIX_FMT_YUV444P10;
+        break;
+    default:
+        av_log(avctx, AV_LOG_WARNING, "Unknown ProRes FOURCC provided (%08X)\n",
+               avctx->codec_tag);
+    }
+
     ff_init_scantable_permutation(idct_permutation,
                                   ctx->prodsp.idct_permutation_type);
 
