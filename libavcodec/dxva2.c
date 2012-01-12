@@ -21,6 +21,9 @@
  */
 
 #include "dxva2_internal.h"
+#include "libavutil/time.h"
+
+#define MAX_PENDING_RETRY 100
 
 void *ff_dxva2_get_surface(const Picture *picture)
 {
@@ -87,12 +90,20 @@ int ff_dxva2_common_end_frame(AVCodecContext *avctx, MpegEncContext *s,
     unsigned               buffer_count = 0;
     DXVA2_DecodeBufferDesc buffer[4];
     DXVA2_DecodeExecuteParams exec = { 0 };
-    int      result;
+    int      result, trys = 0;
+    HRESULT  hr;
 
-    if (FAILED(IDirectXVideoDecoder_BeginFrame(ctx->decoder,
+again:
+    if (FAILED(hr = IDirectXVideoDecoder_BeginFrame(ctx->decoder,
                                                ff_dxva2_get_surface(s->current_picture_ptr),
                                                NULL))) {
-        av_log(avctx, AV_LOG_ERROR, "Failed to begin frame\n");
+        if (hr == E_PENDING && trys < MAX_PENDING_RETRY) {
+            av_log(avctx, AV_LOG_DEBUG, "Failed to begin frame, operation pending\n");
+            trys++;
+            av_usleep(1000);
+            goto again;
+        }
+        av_log(avctx, AV_LOG_ERROR, "Failed to begin frame (hr: %lX)\n", hr);
         return -1;
     }
 
