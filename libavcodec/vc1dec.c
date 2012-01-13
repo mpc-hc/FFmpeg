@@ -5438,13 +5438,15 @@ static int vc1_decode_frame(AVCodecContext *avctx, void *data,
     MpegEncContext *s = &v->s;
     AVFrame *pict = data;
     uint8_t *buf2 = NULL;
-    const uint8_t *buf_start = buf;
+    const uint8_t *buf_start = buf, *buf_start_second_field = NULL;
     int mb_height, n_slices1=-1;
     struct {
         uint8_t *buf;
         GetBitContext gb;
         int mby_start;
     } *slices = NULL, *tmp;
+
+    v->second_field = 0;
 
     if(s->flags & CODEC_FLAG_LOW_DELAY)
         s->low_delay = 1;
@@ -5492,6 +5494,9 @@ static int vc1_decode_frame(AVCodecContext *avctx, void *data,
                     break;
                 case VC1_CODE_FIELD: {
                     int buf_size3;
+                    if (avctx->hwaccel ||
+                        s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+                        buf_start_second_field = start;
                     slices = av_realloc(slices, sizeof(*slices) * (n_slices+1));
                     if (!slices)
                         goto err;
@@ -5541,6 +5546,9 @@ static int vc1_decode_frame(AVCodecContext *avctx, void *data,
                 av_log(avctx, AV_LOG_ERROR, "Error in WVC1 interlaced frame\n");
                 goto err;
             } else { // found field marker, unescape second field
+                if (avctx->hwaccel ||
+                    s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
+                    buf_start_second_field = divider;
                 tmp = av_realloc(slices, sizeof(*slices) * (n_slices+1));
                 if (!tmp)
                     goto err;
@@ -5670,12 +5678,36 @@ static int vc1_decode_frame(AVCodecContext *avctx, void *data,
         &&s->avctx->codec->capabilities&CODEC_CAP_HWACCEL_VDPAU)
         ff_vdpau_vc1_decode_picture(s, buf_start, (buf + buf_size) - buf_start);
     else if (avctx->hwaccel) {
-        if (avctx->hwaccel->start_frame(avctx, buf, buf_size) < 0)
-            goto err;
-        if (avctx->hwaccel->decode_slice(avctx, buf_start, (buf + buf_size) - buf_start) < 0)
-            goto err;
-        if (avctx->hwaccel->end_frame(avctx) < 0)
-            goto err;
+        if (v->field_mode && buf_start_second_field) {
+            s->picture_structure = PICT_BOTTOM_FIELD - v->tff;
+            if (avctx->hwaccel->start_frame(avctx, buf_start, buf_start_second_field - buf_start) < 0)
+                goto err;
+            if (avctx->hwaccel->decode_slice(avctx, buf_start, buf_start_second_field - buf_start) < 0)
+                goto err;
+            if (avctx->hwaccel->end_frame(avctx) < 0)
+                goto err;
+
+            s->picture_structure = PICT_TOP_FIELD + v->tff;
+            v->second_field = 1;
+            v->pic_header_flag = 0;
+            ff_vc1_parse_frame_header_adv(v, &slices[n_slices1 + 1].gb);
+            v->s.current_picture_ptr->f.pict_type = v->s.pict_type;
+
+            if (avctx->hwaccel->start_frame(avctx, buf_start_second_field, (buf + buf_size) - buf_start_second_field) < 0)
+                goto err;
+            if (avctx->hwaccel->decode_slice(avctx, buf_start_second_field, (buf + buf_size) - buf_start_second_field) < 0)
+                goto err;
+            if (avctx->hwaccel->end_frame(avctx) < 0)
+                goto err;
+        } else {
+            s->picture_structure = PICT_FRAME;
+            if (avctx->hwaccel->start_frame(avctx, buf_start, (buf + buf_size) - buf_start) < 0)
+                goto err;
+            if (avctx->hwaccel->decode_slice(avctx, buf_start, (buf + buf_size) - buf_start) < 0)
+                goto err;
+            if (avctx->hwaccel->end_frame(avctx) < 0)
+                goto err;
+        }
     } else {
         ff_er_frame_start(s);
 
