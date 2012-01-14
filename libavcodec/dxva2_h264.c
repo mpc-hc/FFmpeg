@@ -115,6 +115,8 @@ static void fill_picture_parameters(struct dxva_context *ctx, const H264Context 
     pp->bit_depth_chroma_minus8       = h->sps.bit_depth_chroma - 8;
     if (ctx->workaround & FF_DXVA2_WORKAROUND_SCALING_LIST_ZIGZAG)
         pp->Reserved16Bits            = 0;
+    else if (ctx->workaround & FF_DXVA2_WORKAROUND_INTEL_GMA)
+        pp->Reserved16Bits            = 0x34c;
     else
         pp->Reserved16Bits            = 3; /* FIXME is there a way to detect the right mode ? */
     pp->StatusReportFeedbackNumber    = 1 + ctx->report_id++;
