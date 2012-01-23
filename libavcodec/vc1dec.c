@@ -5128,6 +5128,7 @@ static av_cold int vc1_decode_init(AVCodecContext *avctx)
     else
         avctx->pix_fmt = PIX_FMT_GRAY8;
     avctx->hwaccel = ff_find_hwaccel(avctx->codec->id, avctx->pix_fmt);
+    v->parse_only = avctx->hwaccel != NULL;
     v->s.avctx = avctx;
     avctx->flags |= CODEC_FLAG_EMU_EDGE;
     v->s.flags   |= CODEC_FLAG_EMU_EDGE;
