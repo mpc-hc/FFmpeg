@@ -307,6 +307,7 @@ ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVIOContext *pb,
     int size;
     int64_t codec_pos;
     int ret;
+    int w, h;
 
     avpriv_set_pts_info(st, 64, 1, 1000);
     codec_pos = avio_tell(pb);
@@ -364,8 +365,20 @@ ff_rm_read_mdpr_codecdata (AVFormatContext *s, AVIOContext *pb,
         av_dlog(s, "%X %X\n", st->codec->codec_tag, MKTAG('R', 'V', '2', '0'));
         if (st->codec->codec_id == AV_CODEC_ID_NONE)
             goto fail1;
-        st->codec->width  = avio_rb16(pb);
-        st->codec->height = avio_rb16(pb);
+        w = avio_rb16(pb);
+        h = avio_rb16(pb);
+        if (st->codec->codec_id == CODEC_ID_RV40) {
+            char *wstr = av_asprintf("%d", w);
+            av_dict_set(&st->metadata, "rm_width", wstr, 0);
+            av_free(wstr);
+
+            char *hstr = av_asprintf("%d", h);
+            av_dict_set(&st->metadata, "rm_height", hstr, 0);
+            av_free(hstr);
+        } else {
+            st->codec->width = w;
+            st->codec->height = h;
+        }
         avio_skip(pb, 2); // looks like bits per sample
         avio_skip(pb, 4); // always zero?
         st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
