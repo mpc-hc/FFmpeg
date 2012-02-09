@@ -9,6 +9,8 @@ LIBAVFORMAT_$MAJOR {
                 codec_movvideo_tags;
                 ff_get_wav_header;
                 ff_codec_get_id;
+                #for LAV Audio/Video
+                ff_rm_reorder_sipr_data;
                 #FIXME those are for avserver
                 ff_inet_aton;
                 ff_socket_nonblock;
