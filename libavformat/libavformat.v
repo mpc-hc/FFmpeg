@@ -10,6 +10,8 @@ LIBAVFORMAT_$MAJOR {
                 ff_get_wav_header;
                 ff_codec_get_id;
                 ff_update_cur_dts;
+                #for LAV Audio/Video
+                ff_rm_reorder_sipr_data;
                 #FIXME those are for avserver
                 ff_inet_aton;
                 ff_socket_nonblock;
