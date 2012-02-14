@@ -243,7 +243,3 @@ AVInputFormat ff_shorten_demuxer = {
     .raw_codec_id   = CODEC_ID_SHORTEN,
 };
 #endif
-
-#if CONFIG_VC1_DEMUXER
-FF_DEF_RAWVIDEO_DEMUXER(vc1, "raw VC-1", NULL, "vc1", CODEC_ID_VC1)
-#endif
