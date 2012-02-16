@@ -1166,6 +1166,9 @@ av_cold int ff_h264_decode_init(AVCodecContext *avctx){
             s->avctx->pix_fmt = CHROMA444 ? (h->sps.colorspace == AVCOL_SPC_RGB ? PIX_FMT_GBRP : PIX_FMT_YUV444P) : CHROMA422 ? PIX_FMT_YUV422P : PIX_FMT_YUV420P;
     }
 
+    s->avctx->profile = h->sps.profile_idc;
+    s->avctx->level = h->sps.level_idc;
+
     if(h->sps.bitstream_restriction_flag && s->avctx->has_b_frames < h->sps.num_reorder_frames){
         s->avctx->has_b_frames = h->sps.num_reorder_frames;
         s->low_delay = 0;
