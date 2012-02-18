@@ -32,11 +32,13 @@
  */
 
 #include "avcodec.h"
+#include "internal.h"
 #include "get_bits.h"
 #include "huffman.h"
 #include "bytestream.h"
 #include "dsputil.h"
 #include "thread.h"
+#include "libavutil/imgutils.h"
 
 #define FPS_TAG MKTAG('F', 'P', 'S', 'x')
 
@@ -45,7 +47,9 @@
  */
 typedef struct FrapsContext{
     AVCodecContext *avctx;
-    AVFrame frame;
+    int cur_index, prev_index;
+    int next_cur_index, next_prev_index;
+    AVFrame buf_ptrs[2];
     uint8_t *tmpbuf;
     int tmpbuf_size;
     DSPContext dsp;
@@ -61,13 +65,32 @@ static av_cold int decode_init(AVCodecContext *avctx)
 {
     FrapsContext * const s = avctx->priv_data;
 
-    avcodec_get_frame_defaults(&s->frame);
-    avctx->coded_frame = &s->frame;
+    avcodec_get_frame_defaults(&s->buf_ptrs[0]);
+    avcodec_get_frame_defaults(&s->buf_ptrs[1]);
+
+    s->prev_index = 0;
+    s->cur_index = 1;
 
     s->avctx = avctx;
     s->tmpbuf = NULL;
 
     ff_dsputil_init(&s->dsp, avctx);
+
+    return 0;
+}
+
+static int fraps_decode_update_thread_context(AVCodecContext *avctx, const AVCodecContext *avctx_from)
+{
+    FrapsContext *dst = avctx->priv_data, *src = avctx_from->priv_data;
+
+    if (avctx == avctx_from) return 0;
+
+    dst->cur_index  = src->next_cur_index;
+    dst->prev_index = src->next_prev_index;
+
+    memcpy(dst->buf_ptrs, src->buf_ptrs, sizeof(src->buf_ptrs));
+
+    memset(&dst->buf_ptrs[dst->cur_index], 0, sizeof(AVFrame));
 
     return 0;
 }
@@ -124,6 +147,27 @@ static int fraps2_decode_plane(FrapsContext *s, uint8_t *dst, int stride, int w,
     return 0;
 }
 
+static void fraps_frame_copy(FrapsContext *s, uint8_t *dst_data[3], int dst_linesizes[3],
+                             uint8_t *src_data[3], const int src_linesizes[3],
+                             enum PixelFormat pix_fmt, int width, int height)
+{
+    const AVPixFmtDescriptor *desc = &av_pix_fmt_descriptors[pix_fmt];
+    int i;
+
+    for (i = 0; i < 3; i++) {
+        int h = height;
+        int bwidth = av_image_get_linesize(pix_fmt, width, i);
+        if (i) {
+            h = -((-height)>>desc->log2_chroma_h);
+        }
+        ff_thread_await_progress(&s->buf_ptrs[s->prev_index], i, 0);
+        av_image_copy_plane(dst_data[i], dst_linesizes[i],
+                            src_data[i], src_linesizes[i],
+                            bwidth, h);
+        ff_thread_report_progress(&s->buf_ptrs[s->cur_index], i, 0);
+    }
+}
+
 static int decode_frame(AVCodecContext *avctx,
                         void *data, int *got_frame,
                         AVPacket *avpkt)
@@ -132,14 +176,14 @@ static int decode_frame(AVCodecContext *avctx,
     int buf_size = avpkt->size;
     FrapsContext * const s = avctx->priv_data;
     AVFrame *frame = data;
-    AVFrame * const f = &s->frame;
+    AVFrame *f;
     uint32_t header;
     unsigned int version,header_size;
     unsigned int x, y;
     const uint32_t *buf32;
     uint32_t *luma1,*luma2,*cb,*cr;
     uint32_t offs[4];
-    int i, j, is_chroma;
+    int i, j, is_chroma, is_Pframe;
     const int planes = 3;
     uint8_t *out;
     enum AVPixelFormat pix_fmt;
@@ -160,72 +204,92 @@ static int decode_frame(AVCodecContext *avctx,
 
     if (version < 2) {
         unsigned needed_size = avctx->width*avctx->height*3;
-        if (version == 0) needed_size /= 2;
+        if (version == 0) {
+            if ((avctx->width % 8) != 0 || (avctx->height % 2) != 0) {
+                av_log(avctx, AV_LOG_ERROR, "Invalid frame size %dx%d\n",
+                       avctx->width, avctx->height);
+                return AVERROR_INVALIDDATA;
+            }
+            needed_size /= 2;
+        }
         needed_size += header_size;
         /* bit 31 means same as previous pic */
-        if (header & (1U<<31)) {
-            *got_frame = 0;
-            return buf_size;
-        }
-        if (buf_size != needed_size) {
+        is_Pframe = (header & (1U<<31)) ? 1 : 0;
+        if (!is_Pframe && buf_size != needed_size) {
             av_log(avctx, AV_LOG_ERROR,
                    "Invalid frame length %d (should be %d)\n",
                    buf_size, needed_size);
             return AVERROR_INVALIDDATA;
         }
     } else {
-        /* skip frame */
-        if (buf_size == 8) {
-            *got_frame = 0;
-            return buf_size;
-        }
-        if (AV_RL32(buf) != FPS_TAG || buf_size < planes*1024 + 24) {
-            av_log(avctx, AV_LOG_ERROR, "Fraps: error in data stream\n");
-            return AVERROR_INVALIDDATA;
-        }
-        for(i = 0; i < planes; i++) {
-            offs[i] = AV_RL32(buf + 4 + i * 4);
-            if(offs[i] >= buf_size - header_size || (i && offs[i] <= offs[i - 1] + 1024)) {
-                av_log(avctx, AV_LOG_ERROR, "Fraps: plane %i offset is out of bounds\n", i);
+        is_Pframe = buf_size == 8 ? 1 : 0;
+        if (!is_Pframe) {
+            if (AV_RL32(buf) != FPS_TAG || buf_size < planes*1024 + 24) {
+                av_log(avctx, AV_LOG_ERROR, "Fraps: error in data stream\n");
                 return AVERROR_INVALIDDATA;
+             }
+            for(i = 0; i < planes; i++) {
+                offs[i] = AV_RL32(buf + 4 + i * 4);
+                if(offs[i] >= buf_size - header_size || (i && offs[i] <= offs[i - 1] + 1024)) {
+                    av_log(avctx, AV_LOG_ERROR, "Fraps: plane %i offset is out of bounds\n", i);
+                    return AVERROR_INVALIDDATA;
+                }
             }
-        }
-        offs[planes] = buf_size - header_size;
-        for(i = 0; i < planes; i++) {
-            av_fast_padded_malloc(&s->tmpbuf, &s->tmpbuf_size, offs[i + 1] - offs[i] - 1024);
-            if (!s->tmpbuf)
-                return AVERROR(ENOMEM);
+            offs[planes] = buf_size - header_size;
+            for(i = 0; i < planes; i++) {
+                av_fast_padded_malloc(&s->tmpbuf, &s->tmpbuf_size, offs[i + 1] - offs[i] - 1024);
+                if (!s->tmpbuf)
+                    return AVERROR(ENOMEM);
+            }
         }
     }
 
+    if (is_Pframe && !s->buf_ptrs[s->prev_index].data[0]) {
+        av_log(avctx, AV_LOG_ERROR, "decoding must start with keyframe\n");
+        return -1;
+    }
+
+    f = &s->buf_ptrs[s->cur_index];
     if (f->data[0])
         ff_thread_release_buffer(avctx, f);
-    f->pict_type = AV_PICTURE_TYPE_I;
-    f->key_frame = 1;
-    f->reference = 0;
-    f->buffer_hints = FF_BUFFER_HINTS_VALID;
 
     pix_fmt = version & 1 ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_YUVJ420P;
-    if (avctx->pix_fmt != pix_fmt && f->data[0]) {
-        avctx->release_buffer(avctx, f);
+    if (avctx->pix_fmt != pix_fmt && is_Pframe) {
+        av_log(avctx, AV_LOG_ERROR, "p-frame after pix_fmt change, dropped\n");
+        return AVERROR_INVALIDDATA;
     }
     avctx->pix_fmt = pix_fmt;
 
-    if ((ret = ff_thread_get_buffer(avctx, f))) {
+    f->reference = 3;
+
+    if (is_Pframe) {
+        f->pict_type = AV_PICTURE_TYPE_P;
+        f->key_frame = 0;
+    } else {
+        f->pict_type = AV_PICTURE_TYPE_I;
+        f->key_frame = 1;
+    }
+
+    if ((ret = ff_thread_get_buffer(avctx, f)) < 0) {
         av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
         return ret;
+    }
+
+    s->next_prev_index = s->cur_index;
+    s->next_cur_index  = (s->cur_index - 1) & 1;
+
+    ff_thread_finish_setup(avctx);
+
+    /* Copy previous frame */
+    if (is_Pframe) {
+        fraps_frame_copy(s, f->data, f->linesize, s->buf_ptrs[s->prev_index].data,
+                         s->buf_ptrs[s->prev_index].linesize, avctx->pix_fmt, avctx->width, avctx->height);
+        goto end;
     }
 
     switch(version) {
     case 0:
     default:
-        /* Fraps v0 is a reordered YUV420 */
-        if ( (avctx->width % 8) != 0 || (avctx->height % 2) != 0 ) {
-            av_log(avctx, AV_LOG_ERROR, "Invalid frame size %dx%d\n",
-                   avctx->width, avctx->height);
-            return AVERROR_INVALIDDATA;
-        }
-
         buf32=(const uint32_t*)buf;
         for(y=0; y<avctx->height/2; y++){
             luma1=(uint32_t*)&f->data[0][ y*2*f->linesize[0] ];
@@ -241,6 +305,7 @@ static int decode_frame(AVCodecContext *avctx,
                 *cb++    = *buf32++;
             }
         }
+        ff_thread_report_progress(f, INT_MAX, 0);
         break;
 
     case 1:
@@ -249,6 +314,7 @@ static int decode_frame(AVCodecContext *avctx,
             memcpy(&f->data[0][ (avctx->height-y)*f->linesize[0] ],
                    &buf[y*avctx->width*3],
                    3*avctx->width);
+        ff_thread_report_progress(f, INT_MAX, 0);
         break;
 
     case 2:
@@ -262,8 +328,14 @@ static int decode_frame(AVCodecContext *avctx,
             if(fraps2_decode_plane(s, f->data[i], f->linesize[i], avctx->width >> is_chroma,
                     avctx->height >> is_chroma, buf + offs[i], offs[i + 1] - offs[i], is_chroma, 1) < 0) {
                 av_log(avctx, AV_LOG_ERROR, "Error decoding plane %i\n", i);
-                return AVERROR_INVALIDDATA;
-            }
+                if (avctx->active_thread_type & FF_THREAD_FRAME) {
+                    ff_thread_report_progress(f, INT_MAX, 0);
+                    break;
+                }
+                else
+                    return AVERROR_INVALIDDATA;
+            } else
+              ff_thread_report_progress(f, i, 0);
         }
         break;
     case 3:
@@ -273,7 +345,10 @@ static int decode_frame(AVCodecContext *avctx,
             if(fraps2_decode_plane(s, f->data[0] + i + (f->linesize[0] * (avctx->height - 1)), -f->linesize[0],
                     avctx->width, avctx->height, buf + offs[i], offs[i + 1] - offs[i], 0, 3) < 0) {
                 av_log(avctx, AV_LOG_ERROR, "Error decoding plane %i\n", i);
-                return AVERROR_INVALIDDATA;
+                if (avctx->active_thread_type & FF_THREAD_FRAME)
+                    break;
+                else
+                    return AVERROR_INVALIDDATA;
             }
         }
         out = f->data[0];
@@ -287,11 +362,20 @@ static int decode_frame(AVCodecContext *avctx,
             }
             out += f->linesize[0] - 3*avctx->width;
         }
+        ff_thread_report_progress(f, INT_MAX, 0);
         break;
     }
 
+end:
     *frame = *f;
     *got_frame = 1;
+
+    s->prev_index = s->next_prev_index;
+    s->cur_index  = s->next_cur_index;
+
+    /* Only release frames that aren't used anymore */
+    if(s->buf_ptrs[s->cur_index].data[0])
+        ff_thread_release_buffer(avctx, &s->buf_ptrs[s->cur_index]);
 
     return buf_size;
 }
@@ -305,11 +389,17 @@ static int decode_frame(AVCodecContext *avctx,
 static av_cold int decode_end(AVCodecContext *avctx)
 {
     FrapsContext *s = (FrapsContext*)avctx->priv_data;
-
-    if (s->frame.data[0])
-        avctx->release_buffer(avctx, &s->frame);
+    int i;
 
     av_freep(&s->tmpbuf);
+
+    if (avctx->internal->is_copy)
+        return 0;
+
+    for(i = 0; i < 2; i++)
+        if(s->buf_ptrs[i].data[0])
+            ff_thread_release_buffer(avctx, &s->buf_ptrs[i]);
+
     return 0;
 }
 
@@ -324,4 +414,5 @@ AVCodec ff_fraps_decoder = {
     .decode         = decode_frame,
     .capabilities   = CODEC_CAP_DR1 | CODEC_CAP_FRAME_THREADS,
     .long_name      = NULL_IF_CONFIG_SMALL("Fraps"),
+    .update_thread_context = ONLY_IF_THREADS_ENABLED(fraps_decode_update_thread_context)
 };
