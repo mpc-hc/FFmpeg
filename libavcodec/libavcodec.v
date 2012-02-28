@@ -29,5 +29,9 @@ LIBAVCODEC_$MAJOR {
                 ff_vdpau_vc1_decode_picture;
                 ff_dnxhd_get_cid_table;
                 ff_dnxhd_cid_table;
+                #LAV usage
+                ff_vc1_pixel_aspect;
+                ff_dca_convert_bitstream;
+                ff_cropTbl;
         local:  *;
 };
