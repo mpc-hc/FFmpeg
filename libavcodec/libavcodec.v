@@ -29,5 +29,9 @@ LIBAVCODEC_$MAJOR {
                 ff_fdctdsp_init;
                 ff_pixblockdsp_init;
                 ff_me_cmp_init;
+                #LAV usage
+                ff_vc1_pixel_aspect;
+                ff_dca_convert_bitstream;
+                ff_crop_tab;
         local:  *;
 };
