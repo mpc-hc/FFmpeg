@@ -1710,7 +1710,10 @@ int64_t ff_gen_search(AVFormatContext *s, int stream_index, int64_t target_ts,
     while (pos_min < pos_limit) {
         av_dlog(s, "pos_min=0x%"PRIx64" pos_max=0x%"PRIx64" dts_min=%"PRId64" dts_max=%"PRId64"\n",
                 pos_min, pos_max, ts_min, ts_max);
-        assert(pos_limit <= pos_max);
+        if (pos_limit > pos_max) {
+            av_log(s, AV_LOG_ERROR, "pos_limit (0x%"PRIx64") > pos_max (0x%"PRIx64"), pos (0x%"PRIx64")\n", pos_limit, pos_max, pos);
+            return -1;
+        }
 
         if(no_change==0){
             int64_t approximate_keyframe_distance= pos_max - pos_limit;
