@@ -1350,7 +1350,7 @@ int ff_parse_mpeg2_descriptor(AVFormatContext *fc, AVStream *st, int stream_type
                 st->codec->extradata_size > 0)
                 st->need_parsing = 0;
             if (st->codec->codec_id == AV_CODEC_ID_MPEG4SYSTEMS)
-                mpegts_open_section_filter(ts, pid, m4sl_cb, ts, 1);
+                mpegts_open_section_filter(ts, pid, m4sl_cb, ts, 0);
         }
         break;
     case 0x1F: /* FMC descriptor */
@@ -1640,7 +1640,7 @@ static void pat_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
             program->pmt_pid = pmt_pid;
             if (ts->pids[pmt_pid])
                 mpegts_close_filter(ts, ts->pids[pmt_pid]);
-            mpegts_open_section_filter(ts, pmt_pid, pmt_cb, ts, 1);
+            mpegts_open_section_filter(ts, pmt_pid, pmt_cb, ts, 0);
             add_pat_entry(ts, sid);
             add_pid_to_pmt(ts, sid, 0); //add pat pid to program
             add_pid_to_pmt(ts, sid, pmt_pid);
@@ -2025,9 +2025,9 @@ static int mpegts_read_header(AVFormatContext *s)
         if (avio_seek(pb, pos, SEEK_SET) < 0)
             av_log(s, pb->seekable ? AV_LOG_ERROR : AV_LOG_INFO, "Unable to seek back to the start\n");
 
-        mpegts_open_section_filter(ts, SDT_PID, sdt_cb, ts, 1);
+        mpegts_open_section_filter(ts, SDT_PID, sdt_cb, ts, 0);
 
-        mpegts_open_section_filter(ts, PAT_PID, pat_cb, ts, 1);
+        mpegts_open_section_filter(ts, PAT_PID, pat_cb, ts, 0);
 
         handle_packets(ts, s->probesize / ts->raw_packet_size);
         /* if could not find service, enable auto_guess */
@@ -2259,8 +2259,8 @@ MpegTSContext *ff_mpegts_parse_open(AVFormatContext *s)
     ts->raw_packet_size = TS_PACKET_SIZE;
     ts->stream = s;
     ts->auto_guess = 1;
-    mpegts_open_section_filter(ts, SDT_PID, sdt_cb, ts, 1);
-    mpegts_open_section_filter(ts, PAT_PID, pat_cb, ts, 1);
+    mpegts_open_section_filter(ts, SDT_PID, sdt_cb, ts, 0);
+    mpegts_open_section_filter(ts, PAT_PID, pat_cb, ts, 0);
 
     return ts;
 }
