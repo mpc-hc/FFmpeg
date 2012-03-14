@@ -2963,8 +2963,7 @@ static int decode_slice_header(H264Context *h, H264Context *h0)
     if (s->context_initialized &&
         (   s->width != s->avctx->coded_width || s->height != s->avctx->coded_height
             || s->avctx->bits_per_raw_sample != h->sps.bit_depth_luma
-            || h->cur_chroma_format_idc != h->sps.chroma_format_idc
-            || av_cmp_q(h->sps.sar, s->avctx->sample_aspect_ratio))) {
+            || h->cur_chroma_format_idc != h->sps.chroma_format_idc)) {
         if(h != h0 || (s->avctx->active_thread_type & FF_THREAD_FRAME)) {
             av_log_missing_feature(s->avctx,
                                    "Width/height/bit depth/chroma idc changing with threads is", 0);
@@ -2984,8 +2983,6 @@ static int decode_slice_header(H264Context *h, H264Context *h0)
         avcodec_set_dimensions(s->avctx, s->width, s->height);
         s->avctx->width  -= (2>>CHROMA444)*FFMIN(h->sps.crop_right, (8<<CHROMA444)-1);
         s->avctx->height -= (1<<s->chroma_y_shift)*FFMIN(h->sps.crop_bottom, (16>>s->chroma_y_shift)-1) * (2 - h->sps.frame_mbs_only_flag);
-        s->avctx->sample_aspect_ratio = h->sps.sar;
-        av_assert0(s->avctx->sample_aspect_ratio.den);
 
         if (s->avctx->bits_per_raw_sample != h->sps.bit_depth_luma ||
             h->cur_chroma_format_idc != h->sps.chroma_format_idc) {
@@ -3120,6 +3117,9 @@ static int decode_slice_header(H264Context *h, H264Context *h0)
                 }
         }
     }
+
+    s->avctx->sample_aspect_ratio= h->sps.sar;
+    av_assert0(s->avctx->sample_aspect_ratio.den);
 
     if (h == h0 && h->dequant_coeff_pps != pps_id) {
         h->dequant_coeff_pps = pps_id;
