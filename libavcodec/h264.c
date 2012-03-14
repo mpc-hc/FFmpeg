@@ -2467,8 +2467,7 @@ static int decode_slice_header(H264Context *h, H264Context *h0)
                     (   16*h->sps.mb_width != s->avctx->coded_width
                      || 16*h->sps.mb_height * (2 - h->sps.frame_mbs_only_flag) != s->avctx->coded_height
                      || s->avctx->bits_per_raw_sample != h->sps.bit_depth_luma
-                     || h->cur_chroma_format_idc != h->sps.chroma_format_idc
-                     || av_cmp_q(h->sps.sar, s->avctx->sample_aspect_ratio)));
+                     || h->cur_chroma_format_idc != h->sps.chroma_format_idc));
 
     if(must_reinit && (h != h0 || (s->avctx->active_thread_type & FF_THREAD_FRAME))) {
         av_log_missing_feature(s->avctx,
@@ -2679,6 +2678,9 @@ static int decode_slice_header(H264Context *h, H264Context *h0)
                 }
         }
     }
+
+    s->avctx->sample_aspect_ratio= h->sps.sar;
+    av_assert0(s->avctx->sample_aspect_ratio.den);
 
     if (h == h0 && h->dequant_coeff_pps != pps_id) {
         h->dequant_coeff_pps = pps_id;
