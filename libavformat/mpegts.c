@@ -1736,6 +1736,32 @@ static void sdt_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
     }
 }
 
+int avpriv_mpegts_add_stream(AVFormatContext *s, int pid, uint32_t stream_type, int program)
+{
+    MpegTSContext *ts = s->priv_data;
+    MpegTSFilter *tss = ts->pids[pid];
+    PESContext *pes = NULL;
+    AVStream *st = NULL;
+
+    if (tss)
+        return -1;
+
+    pes = add_pes_stream(ts, pid, -1);
+    if (!pes)
+        return -1;
+
+    st = avformat_new_stream(pes->stream, NULL);
+    st->id = pes->pid;
+
+    if (!st)
+        return -1;
+
+    mpegts_set_stream_info(st, pes, stream_type, AV_RL32("HDMV"));
+    if (program >= 0)
+        ff_program_add_stream_index(s, program, st->index);
+    return 0;
+}
+
 /* handle one TS packet */
 static int handle_packet(MpegTSContext *ts, const uint8_t *packet)
 {
