@@ -2440,7 +2440,7 @@ static void compute_chapters_end(AVFormatContext *s)
 }
 
 static int get_std_framerate(int i){
-    if(i<60*12) return i*1001;
+    if(i<60*12) return (i+1)*1001;
     else        return ((const int[]){24,30,60,12,15})[i-60*12]*1000*12;
 }
 
