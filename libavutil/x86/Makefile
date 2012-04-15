@@ -3,4 +3,4 @@ OBJS += x86/cpu.o                                                       \
 
 YASM-OBJS += x86/cpuid.o                                                \
              x86/emms.o                                                 \
-             x86/float_dsp.o                                            \
+             x86/float_dsp.o
