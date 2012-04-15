@@ -471,4 +471,4 @@ TOOLS     = aviocat                                                     \
             ismindex                                                    \
             pktdumper                                                   \
             probetest                                                   \
-            seek_print                                                  \
+            seek_print
