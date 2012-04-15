@@ -35,7 +35,7 @@ OBJS = allfilters.o                                                     \
        vf_scale.o                                                       \
 
 OBJS-$(CONFIG_AVCODEC)                       += avcodec.o
-OBJS-$(CONFIG_AVFORMAT)                      += lavfutils.o
+#OBJS-$(CONFIG_AVFORMAT)                      += lavfutils.o
 OBJS-$(CONFIG_SWSCALE)                       += lswsutils.o
 
 OBJS-$(CONFIG_ACONVERT_FILTER)               += af_aconvert.o
