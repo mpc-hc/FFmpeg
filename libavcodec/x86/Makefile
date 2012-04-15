@@ -75,4 +75,4 @@ YASM-OBJS-$(CONFIG_VP8_DECODER)        += x86/vp8dsp.o
 
 YASM-OBJS                              += x86/dsputil_yasm.o            \
                                           x86/deinterlace.o             \
-                                          x86/fmtconvert.o              \
+                                          x86/fmtconvert.o
