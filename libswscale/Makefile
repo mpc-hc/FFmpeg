@@ -16,4 +16,4 @@ OBJS = input.o                                          \
        yuv2rgb.o                                        \
 
 TESTPROGS = colorspace                                                  \
-            swscale                                                     \
+            swscale
