@@ -19,4 +19,4 @@ OBJS = hscale_fast_bilinear.o                           \
 SLIBOBJS-$(HAVE_GNU_WINDRES) += swscaleres.o
 
 TESTPROGS = colorspace                                                  \
-            swscale                                                     \
+            swscale
