@@ -27,4 +27,4 @@ SLIBOBJS-$(HAVE_GNU_WINDRES) += swscaleres.o
 
 TESTPROGS = colorspace                                                  \
             pixdesc_query                                               \
-            swscale                                                     \
+            swscale
