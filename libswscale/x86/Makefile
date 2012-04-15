@@ -8,4 +8,4 @@ MMX-OBJS                        += x86/rgb2rgb.o                        \
 
 YASM-OBJS                       += x86/input.o                          \
                                    x86/output.o                         \
-                                   x86/scale.o                          \
+                                   x86/scale.o
