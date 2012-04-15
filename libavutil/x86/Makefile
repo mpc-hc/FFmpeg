@@ -1,1 +1,1 @@
-OBJS += x86/cpu.o                                                       \
+OBJS += x86/cpu.o

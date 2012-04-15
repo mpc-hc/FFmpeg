@@ -181,4 +181,4 @@ OBJS-$(CONFIG_MP_FILTER) += libmpcodecs/pullup.o
 TESTPROGS = drawutils formats
 
 TOOLS = graph2dot                                                       \
-        lavfi-showfiltfmts                                              \
+        lavfi-showfiltfmts
