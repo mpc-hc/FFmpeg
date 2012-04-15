@@ -11,4 +11,4 @@ YASM-OBJS += x86/cpuid.o                                                \
              x86/float_dsp.o                                            \
              x86/lls.o                                                  \
 
-YASM-OBJS-$(CONFIG_PIXELUTILS) += x86/pixelutils.o                      \
+YASM-OBJS-$(CONFIG_PIXELUTILS) += x86/pixelutils.o
