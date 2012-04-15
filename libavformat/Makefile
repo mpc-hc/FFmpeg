@@ -546,4 +546,4 @@ TOOLS     = aviocat                                                     \
             pktdumper                                                   \
             probetest                                                   \
             seek_print                                                  \
-            sidxindex                                                   \
+            sidxindex
