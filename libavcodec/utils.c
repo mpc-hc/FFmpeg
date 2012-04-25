@@ -829,11 +829,11 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
     }
 
     entangled_thread_counter++;
-    if (entangled_thread_counter != 1) {
+    /* if (entangled_thread_counter != 1) {
         av_log(avctx, AV_LOG_ERROR, "insufficient thread locking around avcodec_open/close()\n");
         ret = -1;
         goto end;
-    }
+    } */
 
     avctx->internal = av_mallocz(sizeof(AVCodecInternal));
     if (!avctx->internal) {
@@ -1805,11 +1805,11 @@ av_cold int avcodec_close(AVCodecContext *avctx)
     }
 
     entangled_thread_counter++;
-    if (entangled_thread_counter != 1) {
+    /*if (entangled_thread_counter != 1) {
         av_log(avctx, AV_LOG_ERROR, "insufficient thread locking around avcodec_open/close()\n");
         entangled_thread_counter--;
         return -1;
-    }
+    }*/
 
     if (avcodec_is_open(avctx)) {
         if (HAVE_THREADS && avctx->internal->frame_thread_encoder && avctx->thread_count > 1) {
