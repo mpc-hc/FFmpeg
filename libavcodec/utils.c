@@ -755,11 +755,11 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, AVCodec *codec, AVD
     }
 
     entangled_thread_counter++;
-    if(entangled_thread_counter != 1){
+    /* if(entangled_thread_counter != 1){
         av_log(avctx, AV_LOG_ERROR, "insufficient thread locking around avcodec_open/close()\n");
         ret = -1;
         goto end;
-    }
+    } */
 
     avctx->internal = av_mallocz(sizeof(AVCodecInternal));
     if (!avctx->internal) {
