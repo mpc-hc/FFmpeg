@@ -453,8 +453,11 @@ static int mkv_read_header(AVFormatContext *s)
         1 << 30);
       if (st->codec->codec_id != CODEC_ID_H264)
         st->need_parsing = AVSTREAM_PARSE_HEADERS;
-      if (info->DefaultDuration)
-        st->avg_frame_rate = av_d2q(1000000000.0/info->DefaultDuration, INT_MAX);
+      if (info->DefaultDuration) {
+        av_reduce(&st->r_frame_rate.num, &st->r_frame_rate.den,
+                  1000000000, info->DefaultDuration, 100000);
+        st->avg_frame_rate = st->r_frame_rate;
+      }
 
       /* export stereo mode flag as metadata tag */
       /* if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
