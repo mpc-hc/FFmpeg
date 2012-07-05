@@ -4,6 +4,7 @@
 *.def
 *.dll
 *.exe
+*.exp
 *.h.c
 *.lib
 *.pc
