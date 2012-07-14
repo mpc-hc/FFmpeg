@@ -361,7 +361,8 @@ static int h264_split(AVCodecContext *avctx,
             has_sps=1;
 /*        if((state&0xFFFFFF1F) == 0x101 || (state&0xFFFFFF1F) == 0x102 || (state&0xFFFFFF1F) == 0x105){
         }*/
-        if((state&0xFFFFFF00) == 0x100 && (state&0xFFFFFF1F) != 0x107 && (state&0xFFFFFF1F) != 0x108 && (state&0xFFFFFF1F) != 0x109){
+        if((state&0xFFFFFF00) == 0x100 && (state&0xFFFFFF1F) != 0x107 && (state&0xFFFFFF1F) != 0x108 && (state&0xFFFFFF1F) != 0x109
+           && (state&0xFFFFFF1F) != 0x10D && (state&0xFFFFFF1F) != 0x10F && (state&0xFFFFFF1F) != 0x106){
             if(has_sps){
                 while(i>4 && buf[i-5]==0) i--;
                 return i-4;
