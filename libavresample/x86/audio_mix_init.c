@@ -210,6 +210,8 @@ av_cold void ff_audio_mix_init_x86(AudioMix *am)
     SET_MIX_3_8_TO_1_2(5)
     SET_MIX_3_8_TO_1_2(6)
     SET_MIX_3_8_TO_1_2(7)
+#if !ARCH_X86_32
     SET_MIX_3_8_TO_1_2(8)
+#endif
 #endif /* HAVE_YASM */
 }
