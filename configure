@@ -4030,7 +4030,7 @@ enabled libopencv  && require_pkg_config opencv opencv/cxcore.h cvCreateImageHea
 enabled libopenjpeg && { check_lib openjpeg-1.5/openjpeg.h opj_version -lopenjpeg ||
                          check_lib openjpeg.h opj_version -lopenjpeg ||
                          die "ERROR: libopenjpeg not found"; }
-enabled libopus    && require_pkg_config opus opus_multistream.h opus_multistream_decoder_create
+enabled libopus    && require libopus opus_multistream.h opus_multistream_decoder_create -lopus
 enabled libpulse && require_pkg_config libpulse-simple pulse/simple.h pa_simple_new
 enabled libquvi    && require_pkg_config libquvi quvi/quvi.h quvi_init
 enabled librtmp    && require_pkg_config librtmp librtmp/rtmp.h RTMP_Socket
