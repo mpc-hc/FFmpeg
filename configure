@@ -5789,7 +5789,7 @@ enabled libopenjpeg       && { { check_lib openjpeg-2.1/openjpeg.h opj_version -
                                { check_lib openjpeg.h opj_version -lopenjpeg -DOPJ_STATIC && add_cppflags -DOPJ_STATIC; } ||
                                die "ERROR: libopenjpeg not found"; }
 enabled libopenmpt        && require_pkg_config "libopenmpt >= 0.2.6557" libopenmpt/libopenmpt.h openmpt_module_create
-enabled libopus           && require_pkg_config opus opus_multistream.h opus_multistream_decoder_create
+enabled libopus           && require libopus opus_multistream.h opus_multistream_decoder_create -lopus
 enabled libpulse          && require_pkg_config libpulse pulse/pulseaudio.h pa_context_new
 enabled librtmp           && require_pkg_config librtmp librtmp/rtmp.h RTMP_Socket
 enabled librubberband     && require_pkg_config "rubberband >= 1.8.1" rubberband/rubberband-c.h rubberband_new
@@ -5800,7 +5800,7 @@ enabled libsmbclient      && { use_pkg_config smbclient libsmbclient.h smbc_init
 enabled libsnappy         && require libsnappy snappy-c.h snappy_compress -lsnappy
 enabled libsoxr           && require libsoxr soxr.h soxr_create -lsoxr && LIBSOXR="-lsoxr"
 enabled libssh            && require_pkg_config libssh libssh/sftp.h sftp_init
-enabled libspeex          && require_pkg_config speex speex/speex.h speex_decoder_init -lspeex
+enabled libspeex          && require libspeex speex/speex.h speex_decoder_init -lspeex
 enabled libtesseract      && require_pkg_config tesseract tesseract/capi.h TessBaseAPICreate
 enabled libtheora         && require libtheora theora/theoraenc.h th_info_init -ltheoraenc -ltheoradec -logg
 enabled libtwolame        && require libtwolame twolame.h twolame_init -ltwolame &&
