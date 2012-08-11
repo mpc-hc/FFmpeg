@@ -4952,7 +4952,7 @@ enabled libopenjpeg       && { check_lib openjpeg.h opj_version -lopenmj2 -DOPJ_
                                check_lib openjpeg-1.5/openjpeg.h opj_version -lopenjpeg -DOPJ_STATIC ||
                                check_lib openjpeg.h opj_version -lopenjpeg -DOPJ_STATIC ||
                                die "ERROR: libopenjpeg not found"; }
-enabled libopus           && require_pkg_config opus opus_multistream.h opus_multistream_decoder_create
+enabled libopus           && require libopus opus_multistream.h opus_multistream_decoder_create -lopus
 enabled libpulse          && require_pkg_config libpulse pulse/pulseaudio.h pa_context_new
 enabled libquvi           && require_pkg_config libquvi quvi/quvi.h quvi_init
 enabled librtmp           && require_pkg_config librtmp librtmp/rtmp.h RTMP_Socket
@@ -4962,7 +4962,7 @@ enabled libsmbclient      && { use_pkg_config smbclient libsmbclient.h smbc_init
                                require smbclient libsmbclient.h smbc_init -lsmbclient; }
 enabled libsoxr           && require libsoxr soxr.h soxr_create -lsoxr
 enabled libssh            && require_pkg_config libssh libssh/sftp.h sftp_init
-enabled libspeex          && require_pkg_config speex speex/speex.h speex_decoder_init -lspeex
+enabled libspeex          && require libspeex speex/speex.h speex_decoder_init -lspeex
 enabled libstagefright_h264 && require_cpp libstagefright_h264 "binder/ProcessState.h media/stagefright/MetaData.h
     media/stagefright/MediaBufferGroup.h media/stagefright/MediaDebug.h media/stagefright/MediaDefs.h
     media/stagefright/OMXClient.h media/stagefright/OMXCodec.h" android::OMXClient -lstagefright -lmedia -lutils -lbinder -lgnustl_static
