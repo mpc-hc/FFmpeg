@@ -1926,6 +1926,7 @@ static void decode_postinit(H264Context *h, int setup_finished)
     if (h->sps.pic_struct_present_flag) {
         switch (h->sei_pic_struct) {
         case SEI_PIC_STRUCT_FRAME:
+            cur->f.interlaced_frame = FIELD_OR_MBAFF_PICTURE(h);
             break;
         case SEI_PIC_STRUCT_TOP_FIELD:
         case SEI_PIC_STRUCT_BOTTOM_FIELD:
