@@ -326,13 +326,14 @@ static int request_frame(AVFilterLink *link)
 
         ret  = ff_request_frame(link->src->inputs[0]);
 
-        if (ret == AVERROR_EOF && yadif->cur) {
+        if (ret == AVERROR_EOF && yadif->next) {
             AVFrame *next = av_frame_clone(yadif->next);
 
             if (!next)
                 return AVERROR(ENOMEM);
 
-            next->pts = yadif->next->pts * 2 - yadif->cur->pts;
+            if (yadif->cur)
+                next->pts = yadif->next->pts * 2 - yadif->cur->pts;
 
             filter_frame(link->src->inputs[0], next);
             yadif->eof = 1;
