@@ -308,13 +308,14 @@ static int request_frame(AVFilterLink *link)
 
         ret  = ff_request_frame(link->src->inputs[0]);
 
-        if (ret == AVERROR_EOF && yadif->cur) {
+        if (ret == AVERROR_EOF && yadif->next) {
             AVFilterBufferRef *next = avfilter_ref_buffer(yadif->next, ~AV_PERM_WRITE);
 
             if (!next)
                 return AVERROR(ENOMEM);
 
-            next->pts = yadif->next->pts * 2 - yadif->cur->pts;
+            if (yadif->cur)
+                next->pts = yadif->next->pts * 2 - yadif->cur->pts;
 
             start_frame(link->src->inputs[0], next);
             end_frame(link->src->inputs[0]);
