@@ -439,7 +439,7 @@ int ff_img_read_packet(AVFormatContext *s1, AVPacket *pkt)
         } else if (!s1->streams[0]->parser) {
             size[0] = avio_size(s1->pb);
         } else {
-            size[0] = 4096;
+            size[0]= avio_size(f[0]);
         }
     }
 
@@ -484,13 +484,7 @@ int ff_img_read_packet(AVFormatContext *s1, AVPacket *pkt)
 
     if (ret[0] <= 0 || ret[1] < 0 || ret[2] < 0) {
         av_free_packet(pkt);
-        if (ret[0] < 0) {
-            return ret[0];
-        } else if (ret[1] < 0) {
-            return ret[1];
-        } else if (ret[2] < 0)
-            return ret[2];
-        return AVERROR_EOF;
+        return AVERROR_EOF; /* signal EOF */
     } else {
         s->img_count++;
         s->img_number++;
