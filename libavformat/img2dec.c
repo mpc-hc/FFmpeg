@@ -371,8 +371,8 @@ static int read_packet(AVFormatContext *s1, AVPacket *pkt)
     } else {
         f[0] = s1->pb;
         if (url_feof(f[0]))
-            return AVERROR(EIO);
-        size[0]= 4096;
+            return AVERROR_EOF;
+        size[0]= avio_size(f[0]);
     }
 
     if (av_new_packet(pkt, size[0] + size[1] + size[2]) < 0)
@@ -393,7 +393,7 @@ static int read_packet(AVFormatContext *s1, AVPacket *pkt)
 
     if (ret[0] <= 0 || ret[1]<0 || ret[2]<0) {
         av_free_packet(pkt);
-        return AVERROR(EIO); /* signal EOF */
+        return AVERROR_EOF; /* signal EOF */
     } else {
         s->img_count++;
         s->img_number++;
