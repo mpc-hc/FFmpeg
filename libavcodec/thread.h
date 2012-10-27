@@ -140,4 +140,9 @@ void ff_reset_entries(AVCodecContext *avctx);
 void ff_thread_report_progress2(AVCodecContext *avctx, int field, int thread, int n);
 void ff_thread_await_progress2(AVCodecContext *avctx,  int field, int thread, int shift);
 
+/**
+ *  Default lock manager for pthread system
+ */
+int ff_pthread_lockmgr_cb(void **mutex, enum AVLockOp op);
+
 #endif /* AVCODEC_THREAD_H */

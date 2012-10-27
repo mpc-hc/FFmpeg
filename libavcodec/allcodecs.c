@@ -28,6 +28,10 @@
 #include "avcodec.h"
 #include "version.h"
 
+#if HAVE_THREADS
+#include "thread.h"
+#endif
+
 #define REGISTER_HWACCEL(X, x)                                          \
     {                                                                   \
         extern AVHWAccel ff_##x##_hwaccel;                              \
@@ -72,6 +76,10 @@ void avcodec_register_all(void)
     if (initialized)
         return;
     initialized = 1;
+
+#if HAVE_THREADS
+    av_lockmgr_register(&ff_pthread_lockmgr_cb);
+#endif
 
     /* hardware accelerators */
     REGISTER_HWACCEL(H263_VAAPI,        h263_vaapi);
