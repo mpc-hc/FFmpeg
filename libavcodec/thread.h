@@ -125,4 +125,9 @@ int ff_thread_ref_frame(ThreadFrame *dst, ThreadFrame *src);
 int ff_thread_init(AVCodecContext *s);
 void ff_thread_free(AVCodecContext *s);
 
+/**
+ *  Default lock manager for pthread system
+ */
+int ff_pthread_lockmgr_cb(void **mutex, enum AVLockOp op);
+
 #endif /* AVCODEC_THREAD_H */
