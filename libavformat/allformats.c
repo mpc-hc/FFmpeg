@@ -25,6 +25,8 @@
 #include "url.h"
 #include "version.h"
 
+#include <windows.h>
+
 #define REGISTER_MUXER(X, x)                                            \
     {                                                                   \
         extern AVOutputFormat ff_##x##_muxer;                           \
@@ -51,11 +53,19 @@
 
 void av_register_all(void)
 {
-    static int initialized;
+    volatile static int initialized;
+    static CRITICAL_SECTION cs;
 
-    if (initialized)
+    if (InterlockedIncrement(&initialized) == 1) {
+        InitializeCriticalSection(&cs);
+    } else {
+        /* this is done to ensure the previous run is complete before this function finishes */
+        EnterCriticalSection(&cs);
+        LeaveCriticalSection(&cs);
+        initialized = 1;
         return;
-    initialized = 1;
+    }
+    EnterCriticalSection(&cs);
 
     avcodec_register_all();
 
@@ -339,4 +349,6 @@ void av_register_all(void)
     REGISTER_PROTOCOL(LIBRTMPS,         librtmps);
     REGISTER_PROTOCOL(LIBRTMPT,         librtmpt);
     REGISTER_PROTOCOL(LIBRTMPTE,        librtmpte);
+
+    LeaveCriticalSection(&cs);
 }

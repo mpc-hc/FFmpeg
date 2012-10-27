@@ -31,6 +31,8 @@
 #include "thread.h"
 #endif
 
+#include <windows.h>
+
 #define REGISTER_HWACCEL(X, x)                                          \
     {                                                                   \
         extern AVHWAccel ff_##x##_hwaccel;                              \
@@ -70,11 +72,19 @@
 
 void avcodec_register_all(void)
 {
-    static int initialized;
+    volatile static int initialized;
+    static CRITICAL_SECTION cs;
 
-    if (initialized)
+    if (InterlockedIncrement(&initialized) == 1) {
+        InitializeCriticalSection(&cs);
+    } else {
+        /* this is done to ensure the previous run is complete before this function finishes */
+        EnterCriticalSection(&cs);
+        LeaveCriticalSection(&cs);
+        initialized = 1;
         return;
-    initialized = 1;
+    }
+    EnterCriticalSection(&cs);
 
 #if HAVE_THREADS
     av_lockmgr_register(&ff_pthread_lockmgr_cb);
@@ -559,4 +569,6 @@ void avcodec_register_all(void)
     REGISTER_BSF(NOISE,                 noise);
     REGISTER_BSF(REMOVE_EXTRADATA,      remove_extradata);
     REGISTER_BSF(TEXT2MOVSUB,           text2movsub);
+
+    LeaveCriticalSection(&cs);
 }
