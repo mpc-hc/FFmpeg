@@ -2623,7 +2623,7 @@ ccc_flags(){
 msvc_flags(){
     for flag; do
         case $flag in
-            -fomit-frame-pointer) echo -Oy ;;
+            -fomit-frame-pointer) ;;
             -g)                   echo -Z7 ;;
             -Wall)                echo -W4 -wd4244 -wd4127 -wd4018 -wd4389 \
                                        -wd4146 -wd4057 -wd4204 -wd4706 -wd4305 \
@@ -4317,6 +4317,10 @@ elif enabled pathscale; then
     add_cflags -fstrict-overflow -OPT:wrap_around_unsafe_opt=OFF
 elif enabled msvc; then
     enabled x86_32 && disable aligned_stack
+    if enabled debug; then
+        add_cflags -Oy-
+        add_ldflags -debug
+    fi
 fi
 
 case $target_os in
