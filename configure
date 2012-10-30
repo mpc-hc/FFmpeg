@@ -2664,7 +2664,7 @@ msvc_common_flags(){
             -Wall)                ;;
             -std=c99)             ;;
             # Common flags
-            -fomit-frame-pointer) echo -Oy ;;
+            -fomit-frame-pointer) ;;
             -g)                   echo -Z7 ;;
             -fno-math-errno)      ;;
             -fno-common)          ;;
@@ -4423,6 +4423,10 @@ elif enabled pathscale; then
     add_cflags -fstrict-overflow -OPT:wrap_around_unsafe_opt=OFF
 elif enabled msvc; then
     enabled x86_32 && disable aligned_stack
+    if enabled debug; then
+        add_cflags -Oy-
+        add_ldflags -debug
+    fi
 elif enabled icl; then
     enabled x86_32 && disable aligned_stack
     # basically -fstrict-aliasing for icl that doesn't work (correctly) on 13.x+
