@@ -51,6 +51,9 @@ struct AudioMix {
     int32_t *matrix_q15[AVRESAMPLE_MAX_CHANNELS];
     float   *matrix_flt[AVRESAMPLE_MAX_CHANNELS];
     void   **matrix;
+
+    int clip_protection;
+    float clip_max;
 };
 
 void ff_audio_mix_set_func(AudioMix *am, enum AVSampleFormat fmt,
@@ -349,6 +352,8 @@ AudioMix *ff_audio_mix_alloc(AVAudioResampleContext *avr)
     am->out_layout   = avr->out_channel_layout;
     am->in_channels  = avr->in_channels;
     am->out_channels = avr->out_channels;
+    am->clip_protection = avr->internal_sample_fmt == AV_SAMPLE_FMT_FLTP && avr->clip_protection;
+    am->clip_max     = 1.0f;
 
     /* build matrix if the user did not already set one */
     if (avr->mix_matrix) {
@@ -435,6 +440,7 @@ int ff_audio_mix(AudioMix *am, AudioData *src)
 {
     int use_generic = 1;
     int len = src->nb_samples;
+    int i,k;
 
     /* determine whether to use the optimized function based on pointer and
        samples alignment in both the input and output */
@@ -457,6 +463,21 @@ int ff_audio_mix(AudioMix *am, AudioData *src)
         am->mix(src->data, am->matrix, len, am->out_channels, am->in_channels);
 
     ff_audio_data_set_channels(src, am->out_channels);
+
+    /* clip protection is only enabled when the internal sample format is fltp, so we don't need to check here */
+    if (am->clip_protection) {
+        for(i = 0; i < src->nb_samples; i++) {
+            for (k = 0; k < src->channels; k++) {
+                const float sample = fabs(((float **)src->data)[k][i]);
+                if (sample > am->clip_max) {
+                    am->clip_max = sample;
+                    av_log(am->avr, AV_LOG_INFO, "Clipping protection at %.3f\n", sample);
+                }
+                if (am->clip_max > 1.0f)
+                    ((float **)src->data)[k][i] /= am->clip_max;
+            }
+        }
+    }
 
     return 0;
 }

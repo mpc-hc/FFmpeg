@@ -81,6 +81,8 @@ struct AVAudioResampleContext {
      * only used if avresample_set_matrix() is called before avresample_open()
      */
     double *mix_matrix;
+
+    int clip_protection;
 };
 
 #endif /* AVRESAMPLE_INTERNAL_H */
