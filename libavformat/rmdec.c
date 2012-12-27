@@ -1008,6 +1008,27 @@ static int64_t rm_read_dts(AVFormatContext *s, int stream_index,
     return dts;
 }
 
+static int rm_read_seek(struct AVFormatContext *s, int stream_index, int64_t timestamp, int flags)
+{
+    RMDemuxContext *rm = s->priv_data;
+    AVStream *st;
+
+    if (stream_index == -1) {
+        stream_index = av_find_default_stream_index(s);
+        if (stream_index < 0)
+            return -1;
+
+        st = s->streams[stream_index];
+        timestamp = av_rescale(timestamp, st->time_base.den, AV_TIME_BASE * (int64_t)st->time_base.num);
+    }
+
+    /* reset audio deinterleaver */
+    rm->audio_pkt_cnt = 0;
+
+    ff_read_frame_flush(s);
+    return ff_seek_frame_binary(s, stream_index, timestamp, flags);
+}
+
 AVInputFormat ff_rm_demuxer = {
     .name           = "rm",
     .long_name      = NULL_IF_CONFIG_SMALL("RealMedia"),
@@ -1016,6 +1037,7 @@ AVInputFormat ff_rm_demuxer = {
     .read_header    = rm_read_header,
     .read_packet    = rm_read_packet,
     .read_close     = rm_read_close,
+    .read_seek      = rm_read_seek,
     .read_timestamp = rm_read_dts,
 };
 
