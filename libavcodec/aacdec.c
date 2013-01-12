@@ -2486,9 +2486,11 @@ static int aac_decode_frame_int(AVCodecContext *avctx, void *data,
         }
     }
 
+    if (ac->oc[1].status != OC_NONE) {
     if (frame_configure_elements(avctx) < 0) {
         err = -1;
         goto fail;
+    }
     }
 
     ac->tags_mapped = 0;
