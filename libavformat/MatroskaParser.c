@@ -29,6 +29,8 @@
  *
  */
 
+#pragma optimize("", off)
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
