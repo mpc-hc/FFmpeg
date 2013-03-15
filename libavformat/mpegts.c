@@ -184,25 +184,10 @@ typedef struct PESContext {
 
 extern AVInputFormat ff_mpegts_demuxer;
 
-static void clear_avprogram(MpegTSContext *ts, unsigned int programid)
-{
-    AVProgram *prg = NULL;
-    int i;
-    for(i=0; i<ts->stream->nb_programs; i++)
-        if(ts->stream->programs[i]->id == programid){
-            prg = ts->stream->programs[i];
-            break;
-        }
-    if (!prg)
-        return;
-    prg->nb_stream_indexes = 0;
-}
-
 static void clear_program(MpegTSContext *ts, unsigned int programid)
 {
     int i;
 
-    clear_avprogram(ts, programid);
     for(i=0; i<ts->nb_prg; i++)
         if(ts->prg[i].id == programid)
             ts->prg[i].nb_pids = 0;
@@ -1645,17 +1630,6 @@ static void pat_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
             add_pat_entry(ts, sid);
             add_pid_to_pmt(ts, sid, 0); //add pat pid to program
             add_pid_to_pmt(ts, sid, pmt_pid);
-        }
-    }
-
-    if (sid < 0) {
-        int i,j;
-        for (j=0; j<ts->stream->nb_programs; j++) {
-            for (i=0; i<ts->nb_prg; i++)
-                if (ts->prg[i].id == ts->stream->programs[j]->id)
-                    break;
-            if (i==ts->nb_prg)
-                clear_avprogram(ts, ts->stream->programs[j]->id);
         }
     }
 }
