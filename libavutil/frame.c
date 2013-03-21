@@ -450,6 +450,7 @@ int av_frame_copy_props(AVFrame *dst, const AVFrame *src)
     dst->display_picture_number = src->display_picture_number;
     dst->decode_error_flags  = src->decode_error_flags;
 
+    memcpy(dst->error, src->error, sizeof(dst->error));
     av_dict_copy(&dst->metadata, src->metadata, 0);
 
     memcpy(dst->error, src->error, sizeof(dst->error));
