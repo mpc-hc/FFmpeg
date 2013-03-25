@@ -296,4 +296,16 @@ extern const char * const ff_matroska_video_stereo_plane[MATROSKA_VIDEO_STEREO_P
 #define TRACK_NUMBER "webm_dash_manifest_track_number"
 #define CODEC_PRIVATE_SIZE "webm_dash_manifest_codec_priv_size"
 
+typedef struct AVEdition {
+  int index;
+  int ordered;
+  int64_t duration;
+  const char *title;
+} AVEdition;
+
+int av_mkv_get_num_editions(AVFormatContext *s);
+int av_mkv_get_editions(AVFormatContext *s, AVEdition **editions);
+int av_mkv_set_next_edition(AVFormatContext *s, int index);
+int av_mkv_get_edition(AVFormatContext *s);
+
 #endif /* AVFORMAT_MATROSKA_H */
