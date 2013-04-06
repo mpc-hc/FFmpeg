@@ -1031,6 +1031,7 @@ typedef struct AVFormatContext {
 #define AVFMT_FLAG_PRIV_OPT    0x20000 ///< Enable use of private options by delaying codec open (this could be made default once all code is converted)
 #define AVFMT_FLAG_KEEP_SIDE_DATA 0x40000 ///< Don't merge side data but keep it separate.
 
+#define AVFMT_FLAG_NOEXTERNAL     0x40000000 ///< Do not open external files referenced by the format
 #define AVFMT_FLAG_NETWORK        0x80000000 ///< Source is a network protocol, optimize for that
 
     /**
