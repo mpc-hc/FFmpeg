@@ -1377,6 +1377,11 @@ static int parse_packet(AVFormatContext *s, AVPacket *pkt, int stream_index)
 
         compute_pkt_fields(s, st, st->parser, &out_pkt);
 
+        out_pkt.side_data       = pkt->side_data;
+        out_pkt.side_data_elems = pkt->side_data_elems;
+        pkt->side_data          = NULL;
+        pkt->side_data_elems    = 0;
+
         if (out_pkt.data == pkt->data && out_pkt.size == pkt->size) {
             out_pkt.buf   = pkt->buf;
             pkt->buf      = NULL;
