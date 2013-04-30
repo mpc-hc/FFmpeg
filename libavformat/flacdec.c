@@ -32,7 +32,7 @@ static int flac_read_header(AVFormatContext *s)
 {
     int ret, metadata_last=0, metadata_type, metadata_size, found_streaminfo=0;
     uint8_t header[4];
-    uint8_t *buffer=NULL;
+    uint8_t *buffer=NULL,*tmp=NULL;
     AVStream *st = avformat_new_stream(s, NULL);
     if (!st)
         return AVERROR(ENOMEM);
@@ -85,14 +85,20 @@ static int flac_read_header(AVFormatContext *s)
                 RETURN_ERROR(AVERROR_INVALIDDATA);
             }
             found_streaminfo = 1;
-            st->codec->extradata      = buffer;
-            st->codec->extradata_size = metadata_size;
-            buffer = NULL;
+            st->codec->extradata      = av_malloc(metadata_size + 8 + FF_INPUT_BUFFER_PADDING_SIZE);
+            if (!st->codec->extradata) {
+              RETURN_ERROR(AVERROR(ENOMEM));
+            }
+            st->codec->extradata_size = metadata_size + 8;
+            AV_WL32(st->codec->extradata, MKTAG('f','L','a','C'));
+            memcpy(st->codec->extradata + 4, header, 4);
+            memcpy(st->codec->extradata + 8, buffer, metadata_size);
+            av_freep(&buffer);
 
             /* get sample rate and sample count from STREAMINFO header;
              * other parameters will be extracted by the parser */
-            samplerate = AV_RB24(st->codec->extradata + 10) >> 4;
-            samples    = (AV_RB64(st->codec->extradata + 13) >> 24) & ((1ULL << 36) - 1);
+            samplerate = AV_RB24(st->codec->extradata + 8 + 10) >> 4;
+            samples    = (AV_RB64(st->codec->extradata + 8 + 13) >> 24) & ((1ULL << 36) - 1);
 
             /* set time base and duration */
             if (samplerate > 0) {
@@ -140,6 +146,16 @@ static int flac_read_header(AVFormatContext *s)
             /* process supported blocks other than STREAMINFO */
             if (metadata_type == FLAC_METADATA_TYPE_VORBIS_COMMENT) {
                 AVDictionaryEntry *chmask;
+                /* append VorbisComment to extradata */
+                tmp = av_realloc(st->codec->extradata, st->codec->extradata_size + 4 + metadata_size + FF_INPUT_BUFFER_PADDING_SIZE);
+                if (!tmp) {
+                  RETURN_ERROR(AVERROR(ENOMEM));
+                }
+                st->codec->extradata = tmp;
+                tmp += st->codec->extradata_size;
+                memcpy(tmp, header, 4);
+                memcpy(tmp + 4, buffer, metadata_size);
+                st->codec->extradata_size = st->codec->extradata_size + 4 + metadata_size;
 
                 ret = ff_vorbis_comment(s, &s->metadata, buffer, metadata_size, 1);
                 if (ret < 0) {
