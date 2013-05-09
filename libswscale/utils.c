@@ -2067,16 +2067,30 @@ struct SwsContext *sws_getCachedContext(struct SwsContext *context, int srcW,
     static const double default_param[2] = { SWS_PARAM_DEFAULT,
                                              SWS_PARAM_DEFAULT };
 
+    enum AVPixelFormat srcFormatHandled = srcFormat, dstFormatHandled = dstFormat;
+    int src_range  = handle_jpeg(&srcFormatHandled);
+    int src_xyz    = handle_xyz(&srcFormatHandled);
+    int src_0alpha = handle_0alpha(&srcFormatHandled);
+    int dst_range  = handle_jpeg(&dstFormatHandled);
+    int dst_xyz    = handle_xyz(&dstFormatHandled);
+    int dst_0alpha = handle_0alpha(&dstFormatHandled);
+
     if (!param)
         param = default_param;
 
     if (context &&
         (context->srcW      != srcW      ||
          context->srcH      != srcH      ||
-         context->srcFormat != srcFormat ||
+         context->srcFormat != srcFormatHandled ||
+         context->srcRange  != src_range ||
+         context->srcXYZ    != src_xyz   ||
+         context->src0Alpha != src_0alpha ||
          context->dstW      != dstW      ||
          context->dstH      != dstH      ||
-         context->dstFormat != dstFormat ||
+         context->dstFormat != dstFormatHandled ||
+         context->dstRange  != dst_range ||
+         context->dstXYZ    != dst_xyz   ||
+         context->dst0Alpha != dst_0alpha ||
          context->flags     != flags     ||
          context->param[0]  != param[0]  ||
          context->param[1]  != param[1])) {
