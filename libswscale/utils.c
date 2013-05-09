@@ -1993,6 +1993,13 @@ struct SwsContext *sws_getCachedContext(struct SwsContext *context, int srcW,
     static const double default_param[2] = { SWS_PARAM_DEFAULT,
                                              SWS_PARAM_DEFAULT };
 
+    int src_range  = handle_jpeg(&srcFormat);
+    int src_xyz    = handle_xyz(&srcFormat);
+    int src_0alpha = handle_0alpha(&srcFormat);
+    int dst_range  = handle_jpeg(&dstFormat);
+    int dst_xyz    = handle_xyz(&dstFormat);
+    int dst_0alpha = handle_0alpha(&dstFormat);
+
     if (!param)
         param = default_param;
 
@@ -2000,9 +2007,15 @@ struct SwsContext *sws_getCachedContext(struct SwsContext *context, int srcW,
         (context->srcW      != srcW      ||
          context->srcH      != srcH      ||
          context->srcFormat != srcFormat ||
+         context->srcRange  != src_range ||
+         context->srcXYZ    != src_xyz   ||
+         context->src0Alpha != src_0alpha ||
          context->dstW      != dstW      ||
          context->dstH      != dstH      ||
          context->dstFormat != dstFormat ||
+         context->dstRange  != dst_range ||
+         context->dstXYZ    != dst_xyz   ||
+         context->dst0Alpha != dst_0alpha ||
          context->flags     != flags     ||
          context->param[0]  != param[0]  ||
          context->param[1]  != param[1])) {
@@ -2015,15 +2028,15 @@ struct SwsContext *sws_getCachedContext(struct SwsContext *context, int srcW,
             return NULL;
         context->srcW      = srcW;
         context->srcH      = srcH;
-        context->srcRange  = handle_jpeg(&srcFormat);
-        context->src0Alpha = handle_0alpha(&srcFormat);
-        context->srcXYZ    = handle_xyz(&srcFormat);
+        context->srcRange  = src_range;
+        context->src0Alpha = src_0alpha;
+        context->srcXYZ    = src_xyz;
         context->srcFormat = srcFormat;
         context->dstW      = dstW;
         context->dstH      = dstH;
-        context->dstRange  = handle_jpeg(&dstFormat);
-        context->dst0Alpha = handle_0alpha(&dstFormat);
-        context->dstXYZ    = handle_xyz(&dstFormat);
+        context->dstRange  = dst_range;
+        context->dst0Alpha = dst_0alpha;
+        context->dstXYZ    = dst_xyz;
         context->dstFormat = dstFormat;
         context->flags     = flags;
         context->param[0]  = param[0];
