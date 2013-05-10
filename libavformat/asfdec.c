@@ -1512,6 +1512,13 @@ static int asf_read_seek(AVFormatContext *s, int stream_index,
             return ret;
     }
 
+    if (pts == 0) {
+      if(avio_seek(s->pb, asf->data_offset, SEEK_SET) < 0)
+        return -1;
+      asf_reset_header(s);
+      return 0;
+    }
+
     if (!asf->index_read)
         asf_build_simple_index(s, stream_index);
 
