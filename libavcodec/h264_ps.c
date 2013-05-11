@@ -544,6 +544,10 @@ int ff_h264_decode_seq_parameter_set(H264Context *h){
 
     av_free(h->sps_buffers[sps_id]);
     h->sps_buffers[sps_id] = sps;
+    if (h->current_sps_id == -1) {
+        h->sps            = *sps;
+        h->current_sps_id = sps_id;
+    }
 
     return 0;
 fail:
