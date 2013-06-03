@@ -59,6 +59,7 @@ static int s302m_parse_frame_header(AVCodecContext *avctx, const uint8_t *buf,
     }
 
     /* Set output properties */
+    avctx->bits_per_raw_sample =
     avctx->bits_per_coded_sample = bits;
     if (bits > 16)
         avctx->sample_fmt = AV_SAMPLE_FMT_S32;
