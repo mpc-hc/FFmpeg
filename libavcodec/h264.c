@@ -3539,6 +3539,7 @@ static int decode_slice_header(H264Context *h, H264Context *h0)
     h->avctx->profile = ff_h264_get_profile(&h->sps);
     h->avctx->level   = h->sps.level_idc;
     h->avctx->refs    = h->sps.ref_frame_count;
+    h->avctx->progressive_sequence = h->sps.frame_mbs_only_flag;
 
     must_reinit = (h->context_initialized &&
                     (   16*h->sps.mb_width != h->avctx->coded_width
