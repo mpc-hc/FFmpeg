@@ -3648,6 +3648,13 @@ typedef struct AVCodecContext {
      *             AVCodecContext.get_format callback)
      */
     int hwaccel_flags;
+
+    /**
+     * Is the stream completely progressive?
+     * - decoding: set by avcodec
+     * - encoding: unused
+     */
+    int progressive_sequence;
 } AVCodecContext;
 
 AVRational av_codec_get_pkt_timebase         (const AVCodecContext *avctx);
