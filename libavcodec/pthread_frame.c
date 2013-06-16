@@ -230,6 +230,8 @@ static int update_context_from_thread(AVCodecContext *dst, AVCodecContext *src, 
         dst->sample_fmt     = src->sample_fmt;
         dst->channel_layout = src->channel_layout;
         dst->internal->hwaccel_priv_data = src->internal->hwaccel_priv_data;
+
+        dst->progressive_sequence = src->progressive_sequence;
     }
 
     if (for_user) {
