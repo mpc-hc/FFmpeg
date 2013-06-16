@@ -3359,6 +3359,12 @@ typedef struct AVCodecContext {
     AVPacketSideData *coded_side_data;
     int            nb_coded_side_data;
 
+    /**
+     * Is the stream completely progressive?
+     * - decoding: set by avcodec
+     * - encoding: unused
+     */
+    int progressive_sequence;
 } AVCodecContext;
 
 AVRational av_codec_get_pkt_timebase         (const AVCodecContext *avctx);
