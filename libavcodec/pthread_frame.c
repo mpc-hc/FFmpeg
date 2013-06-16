@@ -238,6 +238,8 @@ FF_ENABLE_DEPRECATION_WARNINGS
         dst->sample_fmt     = src->sample_fmt;
         dst->channel_layout = src->channel_layout;
         dst->internal->hwaccel_priv_data = src->internal->hwaccel_priv_data;
+
+        dst->progressive_sequence = src->progressive_sequence;
     }
 
     if (for_user) {
