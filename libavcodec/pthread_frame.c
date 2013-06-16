@@ -226,6 +226,8 @@ static int update_context_from_thread(AVCodecContext *dst, AVCodecContext *src, 
         dst->sample_rate    = src->sample_rate;
         dst->sample_fmt     = src->sample_fmt;
         dst->channel_layout = src->channel_layout;
+
+        dst->progressive_sequence = src->progressive_sequence;
     }
 
     if (for_user) {

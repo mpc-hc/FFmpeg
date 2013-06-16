@@ -3000,6 +3000,13 @@ typedef struct AVCodecContext {
      * - decoding: unused.
      */
     uint16_t *chroma_intra_matrix;
+
+    /**
+     * Is the stream completely progressive?
+     * - decoding: set by avcodec
+     * - encoding: unused
+     */
+    int progressive_sequence;
 } AVCodecContext;
 
 AVRational av_codec_get_pkt_timebase         (const AVCodecContext *avctx);
