@@ -2991,6 +2991,13 @@ typedef struct AVCodecContext {
 #define FF_DEBUG_VIS_MV_B_FOR  0x00000002 //visualize forward predicted MVs of B frames
 #define FF_DEBUG_VIS_MV_B_BACK 0x00000004 //visualize backward predicted MVs of B frames
 #endif
+
+    /**
+     * Is the stream completely progressive?
+     * - decoding: set by avcodec
+     * - encoding: unused
+     */
+    int progressive_sequence;
 } AVCodecContext;
 
 AVRational av_codec_get_pkt_timebase         (const AVCodecContext *avctx);
