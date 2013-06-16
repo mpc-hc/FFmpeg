@@ -3508,6 +3508,12 @@ typedef struct AVCodecContext {
 #define FF_SUB_TEXT_FMT_ASS_WITH_TIMINGS 1
 #endif
 
+    /**
+     * Is the stream completely progressive?
+     * - decoding: set by avcodec
+     * - encoding: unused
+     */
+    int progressive_sequence;
 } AVCodecContext;
 
 AVRational av_codec_get_pkt_timebase         (const AVCodecContext *avctx);
