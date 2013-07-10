@@ -31,6 +31,7 @@ typedef struct DCAParseContext {
     uint32_t lastmarker;
     int size;
     int framesize;
+    int bitstream_framesize;
     int hd_pos;
 } DCAParseContext;
 
@@ -39,6 +40,26 @@ typedef struct DCAParseContext {
  || (state == DCA_MARKER_14B_BE && (i < buf_size-2) && buf[i+1] == 0x07 && (buf[i+2] & 0xF0) == 0xF0) \
  || state == DCA_MARKER_RAW_LE || state == DCA_MARKER_RAW_BE || state == DCA_HD_MARKER)
 
+static int dca_parse_framesize(const uint8_t *buf, int buf_size, int *framesize)
+{
+    GetBitContext gb;
+    uint8_t hdr[12 + FF_INPUT_BUFFER_PADDING_SIZE] = { 0 };
+    int ret;
+
+    if (buf_size < 12)
+        return AVERROR_INVALIDDATA;
+
+    if ((ret = ff_dca_convert_bitstream(buf, 12, hdr, 12)) < 0)
+        return ret;
+
+    init_get_bits(&gb, hdr, 96);
+    skip_bits_long(&gb, 46);
+
+    *framesize = get_bits(&gb, 14) + 1;
+
+    return 0;
+}
+
 /**
  * Find the end of the current frame in the bitstream.
  * @return the position of the first byte of the next frame, or -1
@@ -46,7 +67,7 @@ typedef struct DCAParseContext {
 static int dca_find_frame_end(DCAParseContext * pc1, const uint8_t * buf,
                               int buf_size)
 {
-    int start_found, i;
+    int start_found, i, framesize;
     uint32_t state;
     ParseContext *pc = &pc1->pc;
 
@@ -61,6 +82,18 @@ static int dca_find_frame_end(DCAParseContext * pc1, const uint8_t * buf,
                 if (!pc1->lastmarker || state == pc1->lastmarker || pc1->lastmarker == DCA_HD_MARKER) {
                     start_found = 1;
                     pc1->lastmarker = state;
+
+                    if (buf_size - i > 8) {
+                        uint8_t hdr[12 + FF_INPUT_BUFFER_PADDING_SIZE] = { 0 };
+                        AV_WB32(hdr, state);
+                        memcpy(hdr+4, buf + i + 1, 8);
+                        if (!dca_parse_framesize(hdr, 12, &framesize) && framesize != pc1->bitstream_framesize) {
+                            av_log(NULL, AV_LOG_DEBUG, "Parsed framesize: %d\n", framesize);
+                            pc1->bitstream_framesize = framesize;
+                            pc1->framesize = 0;
+                            pc1->hd_pos = 0;
+                        }
+                    }
                     break;
                 }
             }
@@ -77,7 +110,7 @@ static int dca_find_frame_end(DCAParseContext * pc1, const uint8_t * buf,
                     continue;
                 // We have to check that we really read a full frame here, and that it isn't a pure HD frame, because their size is not constant.
                 if(!pc1->framesize && state == pc1->lastmarker && state != DCA_HD_MARKER){
-                    pc1->framesize = pc1->hd_pos ? pc1->hd_pos : pc1->size;
+                    pc1->framesize = FFMIN(pc1->hd_pos ? pc1->hd_pos : pc1->size, pc1->bitstream_framesize);
                 }
                 pc->frame_start_found = 0;
                 pc->state = -1;
