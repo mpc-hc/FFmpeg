@@ -130,7 +130,7 @@ DEFINE_MIX_3_8_TO_1_2(8)
                               chan, 2, 16, 8, "SSE4",                       \
                               ff_mix_ ## chan ## _to_2_s16p_flt_sse4);      \
     }                                                                       \
-    if (EXTERNAL_AVX(cpu_flags)) {                                          \
+    if (ARCH_X86_32 && EXTERNAL_AVX(cpu_flags)) {                                          \
         int ptr_align = 32;                                                 \
         int smp_align = 8;                                                  \
         if (ARCH_X86_32 || chan >= 6) {                                     \
@@ -150,7 +150,7 @@ DEFINE_MIX_3_8_TO_1_2(8)
                               chan, 2, 16, 8, "AVX",                        \
                               ff_mix_ ## chan ## _to_2_s16p_flt_avx);       \
     }                                                                       \
-    if (EXTERNAL_FMA4(cpu_flags)) {                                         \
+    if (ARCH_X86_32 && EXTERNAL_FMA4(cpu_flags)) {                                         \
         int ptr_align = 32;                                                 \
         int smp_align = 8;                                                  \
         if (ARCH_X86_32 || chan >= 6) {                                     \
@@ -196,7 +196,7 @@ av_cold void ff_audio_mix_init_x86(AudioMix *am)
         ff_audio_mix_set_func(am, AV_SAMPLE_FMT_S16P, AV_MIX_COEFF_TYPE_FLT,
                               1, 2, 16, 8, "SSE4", ff_mix_1_to_2_s16p_flt_sse4);
     }
-    if (EXTERNAL_AVX(cpu_flags)) {
+    if (ARCH_X86_32 && EXTERNAL_AVX(cpu_flags)) {
         ff_audio_mix_set_func(am, AV_SAMPLE_FMT_FLTP, AV_MIX_COEFF_TYPE_FLT,
                               2, 1, 32, 16, "AVX", ff_mix_2_to_1_fltp_flt_avx);
         ff_audio_mix_set_func(am, AV_SAMPLE_FMT_FLTP, AV_MIX_COEFF_TYPE_FLT,
