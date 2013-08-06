@@ -89,7 +89,8 @@ int ff_get_wav_header(AVIOContext *pb, AVCodecContext *codec, int size, int big_
 
     if (size < 14) {
         avpriv_request_sample(codec, "wav header size < 14");
-        return AVERROR_INVALIDDATA;
+        avio_skip(pb, size);
+        return 0;
     }
 
     codec->codec_type  = AVMEDIA_TYPE_AUDIO;
