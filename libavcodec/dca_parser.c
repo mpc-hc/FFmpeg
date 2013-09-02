@@ -32,6 +32,7 @@ typedef struct DCAParseContext {
     uint32_t lastmarker;
     int size;
     int framesize;
+    int hdframesize;
 } DCAParseContext;
 
 #define IS_CORE_MARKER(state) \
@@ -46,6 +47,27 @@ typedef struct DCAParseContext {
 
 #define CORE_MARKER(state)  ((state >> 16) & 0xFFFFFFFF)
 #define EXSS_MARKER(state)  (state & 0xFFFFFFFF)
+
+static int dca_parse_hd_framesize(const uint8_t *buf, int buf_size, int *framesize)
+{
+    GetBitContext gb;
+
+    if (buf_size < 6)
+        return AVERROR_INVALIDDATA;
+
+    init_get_bits8(&gb, buf, 6);
+    skip_bits(&gb, 10);
+
+    if (get_bits1(&gb)) {
+        skip_bits(&gb, 12);
+        *framesize = get_bits(&gb, 20);
+    } else {
+        skip_bits(&gb, 8);
+        *framesize = get_bits(&gb, 16);
+    }
+
+    return 0;
+}
 
 /**
  * Find the end of the current frame in the bitstream.
@@ -63,7 +85,8 @@ static int dca_find_frame_end(DCAParseContext *pc1, const uint8_t *buf,
 
     i = 0;
     if (!start_found) {
-        for (i = 0; i < buf_size; i++) {
+      pc1->hdframesize = 0;
+      for (i = 0; i < buf_size; i++) {
             state = (state << 8) | buf[i];
             if (IS_MARKER(state)) {
                 if (!pc1->lastmarker || CORE_MARKER(state) == pc1->lastmarker || pc1->lastmarker == DCA_SYNCWORD_SUBSTREAM) {
@@ -82,8 +105,12 @@ static int dca_find_frame_end(DCAParseContext *pc1, const uint8_t *buf,
         for (; i < buf_size; i++) {
             pc1->size++;
             state = (state << 8) | buf[i];
+            if (EXSS_MARKER(state) == DCA_SYNCWORD_SUBSTREAM && pc1->size >= pc1->framesize && !pc1->hdframesize) {
+                if (dca_parse_hd_framesize(&buf[i+1], buf_size - (i+1), &pc1->hdframesize) < 0)
+                    pc1->hdframesize = 0;
+            }
             if (IS_MARKER(state) && (CORE_MARKER(state) == pc1->lastmarker || pc1->lastmarker == DCA_SYNCWORD_SUBSTREAM)) {
-                if (pc1->framesize > pc1->size)
+                if (pc1->framesize + pc1->hdframesize > pc1->size)
                     continue;
                 pc->frame_start_found = 0;
                 pc->state64           = -1;
