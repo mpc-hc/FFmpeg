@@ -31,6 +31,7 @@ typedef struct DCAParseContext {
     uint32_t lastmarker;
     int size;
     int framesize;
+    int hdframesize;
     int bitstream_framesize;
     int hd_pos;
 } DCAParseContext;
@@ -60,6 +61,27 @@ static int dca_parse_framesize(const uint8_t *buf, int buf_size, int *framesize)
     return 0;
 }
 
+static int dca_parse_hd_framesize(const uint8_t *buf, int buf_size, int *framesize)
+{
+    GetBitContext gb;
+
+    if (buf_size < 6)
+        return AVERROR_INVALIDDATA;
+
+    init_get_bits8(&gb, buf, 6);
+    skip_bits(&gb, 10);
+
+    if (get_bits1(&gb)) {
+        skip_bits(&gb, 12);
+        *framesize = get_bits(&gb, 20);
+    } else {
+        skip_bits(&gb, 8);
+        *framesize = get_bits(&gb, 16);
+    }
+
+    return 0;
+}
+
 /**
  * Find the end of the current frame in the bitstream.
  * @return the position of the first byte of the next frame, or -1
@@ -76,7 +98,8 @@ static int dca_find_frame_end(DCAParseContext * pc1, const uint8_t * buf,
 
     i = 0;
     if (!start_found) {
-        for (i = 0; i < buf_size; i++) {
+      pc1->hdframesize = 0;
+      for (i = 0; i < buf_size; i++) {
             state = (state << 8) | buf[i];
             if (IS_MARKER(state, i, buf, buf_size)) {
                 if (!pc1->lastmarker || state == pc1->lastmarker || pc1->lastmarker == DCA_HD_MARKER) {
@@ -105,8 +128,11 @@ static int dca_find_frame_end(DCAParseContext * pc1, const uint8_t * buf,
             state = (state << 8) | buf[i];
             if (state == DCA_HD_MARKER && !pc1->hd_pos)
                 pc1->hd_pos = pc1->size;
+            if (state == DCA_HD_MARKER)
+                if (dca_parse_hd_framesize(&buf[i+1], buf_size - (i+1), &pc1->hdframesize) < 0)
+                    pc1->hdframesize = 0;
             if (IS_MARKER(state, i, buf, buf_size) && (state == pc1->lastmarker || pc1->lastmarker == DCA_HD_MARKER)) {
-                if(pc1->framesize > pc1->size)
+                if(pc1->framesize + pc1->hdframesize > pc1->size)
                     continue;
                 // We have to check that we really read a full frame here, and that it isn't a pure HD frame, because their size is not constant.
                 if(!pc1->framesize && state == pc1->lastmarker && state != DCA_HD_MARKER){
