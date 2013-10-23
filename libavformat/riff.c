@@ -430,6 +430,10 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { AV_CODEC_ID_MAGICYUV,     MKTAG('M', 'A', 'G', 'Y') },
     { AV_CODEC_ID_YLC,          MKTAG('Y', 'L', 'C', '0') },
 
+    { AV_CODEC_ID_HEVC,         MKTAG('H', 'E', 'V', 'C') },
+    { AV_CODEC_ID_HEVC,         MKTAG('H', 'V', 'C', '1') },
+    { AV_CODEC_ID_HEVC,         MKTAG('H', 'M', '1', '0') },
+
     { AV_CODEC_ID_NONE,         0 }
 };
 
