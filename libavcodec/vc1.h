@@ -415,6 +415,8 @@ typedef struct VC1Context{
 
     int parse_only;              ///< Context is used within parser
     int resync_marker;           ///< could this stream contain resync markers
+
+    int recovered;
 } VC1Context;
 
 /** Find VC-1 marker in buffer
