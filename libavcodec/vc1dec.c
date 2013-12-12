@@ -849,6 +849,13 @@ static int vc1_decode_frame(AVCodecContext *avctx, void *data,
     s->current_picture.f->pict_type = s->pict_type;
     s->current_picture.f->key_frame = s->pict_type == AV_PICTURE_TYPE_I;
 
+    if (!v->recovered && !(avctx->flags2 & CODEC_FLAG2_SHOW_ALL)) {
+        if (s->pict_type == AV_PICTURE_TYPE_I)
+            v->recovered = 1;
+        else
+            goto err;
+    }
+
     /* skip B-frames if we don't have reference frames */
     if (!s->last_picture_ptr && (s->pict_type == AV_PICTURE_TYPE_B || s->droppable)) {
         av_log(v->s.avctx, AV_LOG_DEBUG, "Skipping B frame without reference frames\n");
@@ -1084,6 +1091,14 @@ err:
     return ret;
 }
 
+static void vc1_decode_flush(AVCodecContext *avctx)
+{
+    VC1Context *v = avctx->priv_data;
+
+    ff_mpeg_flush(avctx);
+
+    v->recovered = 0;
+}
 
 static const AVProfile profiles[] = {
     { FF_PROFILE_VC1_SIMPLE,   "Simple"   },
@@ -1119,7 +1134,7 @@ AVCodec ff_vc1_decoder = {
     .init           = vc1_decode_init,
     .close          = ff_vc1_decode_end,
     .decode         = vc1_decode_frame,
-    .flush          = ff_mpeg_flush,
+    .flush          = vc1_decode_flush,
     .capabilities   = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_DELAY,
     .pix_fmts       = vc1_hwaccel_pixfmt_list_420,
     .profiles       = NULL_IF_CONFIG_SMALL(profiles)
@@ -1135,7 +1150,7 @@ AVCodec ff_wmv3_decoder = {
     .init           = vc1_decode_init,
     .close          = ff_vc1_decode_end,
     .decode         = vc1_decode_frame,
-    .flush          = ff_mpeg_flush,
+    .flush          = vc1_decode_flush,
     .capabilities   = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_DELAY,
     .pix_fmts       = vc1_hwaccel_pixfmt_list_420,
     .profiles       = NULL_IF_CONFIG_SMALL(profiles)
