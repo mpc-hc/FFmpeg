@@ -3215,17 +3215,13 @@ static enum AVPixelFormat get_pixel_format(H264Context *h, int force_callback)
             } else if (h->avctx->colorspace == AVCOL_SPC_YCGCO) {
                 av_log(h->avctx, AV_LOG_WARNING, "Detected unsupported YCgCo colorspace.\n");
             }
-            return h->avctx->color_range == AVCOL_RANGE_JPEG ? AV_PIX_FMT_YUVJ444P
-                                                                : AV_PIX_FMT_YUV444P;
+            return AV_PIX_FMT_YUV444P;
         } else if (CHROMA422(h)) {
-            return h->avctx->color_range == AVCOL_RANGE_JPEG ? AV_PIX_FMT_YUVJ422P
-                                                             : AV_PIX_FMT_YUV422P;
+            return AV_PIX_FMT_YUV422P;
         } else {
             int i;
             const enum AVPixelFormat * fmt = h->avctx->codec->pix_fmts ?
                                         h->avctx->codec->pix_fmts :
-                                        h->avctx->color_range == AVCOL_RANGE_JPEG ?
-                                        h264_hwaccel_pixfmt_list_jpeg_420 :
                                         h264_hwaccel_pixfmt_list_420;
 
             for (i=0; fmt[i] != AV_PIX_FMT_NONE; i++)
