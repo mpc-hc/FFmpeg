@@ -1117,9 +1117,6 @@ static void flush_dpb(AVCodecContext *avctx)
     ff_h264_unref_picture(h, &h->cur_pic);
 
     h->mb_y = 0;
-
-    ff_h264_free_tables(h, 1);
-    h->context_initialized = 0;
 }
 
 int ff_init_poc(H264Context *h, int pic_field_poc[2], int *pic_poc)
