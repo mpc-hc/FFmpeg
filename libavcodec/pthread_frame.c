@@ -914,7 +914,15 @@ int ff_pthread_lockmgr_cb(void **mutex, enum AVLockOp op)
         *mutex = av_malloc(sizeof(pthread_mutex_t));
         if (!mutex)
             return AVERROR(ENOMEM);
+#if HAVE_PTHREADS
+        pthread_mutexattr_t attr;
+        pthread_mutexattr_init(&attr);
+        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+        ret = pthread_mutex_init(*mutex, &attr);
+        pthread_mutexattr_destroy(&attr);
+#else
         ret = pthread_mutex_init(*mutex, NULL);
+#endif
         break;
     case AV_LOCK_OBTAIN:
         ret = pthread_mutex_lock(*mutex);
