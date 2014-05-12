@@ -92,14 +92,15 @@ static int pthread_create(pthread_t *thread, const void *unused_attr,
     return !thread->handle;
 }
 
-static void pthread_join(pthread_t thread, void **value_ptr)
+static int pthread_join(pthread_t thread, void **value_ptr)
 {
     DWORD ret = WaitForSingleObject(thread.handle, INFINITE);
     if (ret != WAIT_OBJECT_0)
-        return;
+        return EINVAL;
     if (value_ptr)
         *value_ptr = thread.ret;
     CloseHandle(thread.handle);
+    return 0;
 }
 
 static inline int pthread_mutex_init(pthread_mutex_t *m, void* attr)
