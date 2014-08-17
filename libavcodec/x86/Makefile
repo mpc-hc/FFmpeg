@@ -137,7 +137,9 @@ YASM-OBJS-$(CONFIG_HEVC_DECODER)       += x86/hevc_mc.o                 \
                                           x86/hevc_deblock.o            \
                                           x86/hevc_idct.o               \
                                           x86/hevc_res_add.o            \
-                                          x86/hevc_sao.o
+                                          x86/hevc_sao.o                \
+                                          x86/hevc_idct_intrinsic.o
+
 YASM-OBJS-$(CONFIG_MLP_DECODER)        += x86/mlpdsp.o
 YASM-OBJS-$(CONFIG_MPEG4_DECODER)      += x86/xvididct.o
 YASM-OBJS-$(CONFIG_PNG_DECODER)        += x86/pngdsp.o
