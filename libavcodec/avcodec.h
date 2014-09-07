@@ -2939,6 +2939,7 @@ typedef struct AVCodecContext {
 #define FF_BUG_MS               8192 ///< Work around various bugs in Microsoft's broken decoders.
 #define FF_BUG_TRUNCATED       16384
 #define FF_BUG_IEDGE           32768
+#define FF_BUG_X264_LOSSLESS   (1 << 30)
 
     /**
      * strictly follow the standard (MPEG-4, ...).
