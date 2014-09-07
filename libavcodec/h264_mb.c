@@ -619,6 +619,7 @@ static av_always_inline void hl_decode_mb_predict_luma(const H264Context *h,
                                                        int linesize,
                                                        uint8_t *dest_y, int p)
 {
+    AVCodecContext *const avctx = h->avctx;
     void (*idct_add)(uint8_t *dst, int16_t *block, int stride);
     void (*idct_dc_add)(uint8_t *dst, int16_t *block, int stride);
     int i;
@@ -637,7 +638,7 @@ static av_always_inline void hl_decode_mb_predict_luma(const H264Context *h,
                 uint8_t *const ptr = dest_y + block_offset[i];
                 const int dir      = sl->intra4x4_pred_mode_cache[scan8[i]];
                 if (transform_bypass && h->ps.sps->profile_idc == 244 && dir <= 1) {
-                    if (h->sei.unregistered.x264_build != -1) {
+                    if ((h->sei.unregistered.x264_build != -1 && (avctx->workaround_bugs & FF_BUG_AUTODETECT)) || (avctx->workaround_bugs & FF_BUG_X264_LOSSLESS)) {
                         h->hpc.pred8x8l_add[dir](ptr, sl->mb + (i * 16 + p * 256 << pixel_shift), linesize);
                     } else
                         h->hpc.pred8x8l_filter_add[dir](ptr, sl->mb + (i * 16 + p * 256 << pixel_shift),
