@@ -1836,6 +1836,7 @@ TOOLCHAIN_FEATURES="
 
 TYPES_LIST="
     CONDITION_VARIABLE_Ptr
+    DXVA_PicParams_HEVC
     socklen_t
     struct_addrinfo
     struct_dcadec_exss_info_matrix_encoding
@@ -2410,9 +2411,9 @@ h264_vdpau_decoder_deps="vdpau"
 h264_vdpau_decoder_select="h264_decoder"
 h264_vdpau_hwaccel_deps="vdpau"
 h264_vdpau_hwaccel_select="h264_decoder"
-hevc_d3d11va_hwaccel_deps="d3d11va DXVA_PicParams_HEVC"
+hevc_d3d11va_hwaccel_deps="d3d11va"
 hevc_d3d11va_hwaccel_select="hevc_decoder"
-hevc_dxva2_hwaccel_deps="dxva2 DXVA_PicParams_HEVC"
+hevc_dxva2_hwaccel_deps="dxva2 "
 hevc_dxva2_hwaccel_select="hevc_decoder"
 hevc_qsv_hwaccel_deps="libmfx"
 hevc_vdpau_hwaccel_deps="vdpau VdpPictureInfoHEVC"
