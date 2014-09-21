@@ -46,6 +46,9 @@ void ff_hevc_unref_frame(HEVCContext *s, HEVCFrame *frame, int flags)
         frame->refPicList = NULL;
 
         frame->collocated_ref = NULL;
+
+        av_buffer_unref(&frame->hwaccel_priv_buf);
+        frame->hwaccel_picture_private = NULL;
     }
 }
 
@@ -106,6 +109,18 @@ static HEVCFrame *alloc_frame(HEVCContext *s)
 
         frame->frame->top_field_first  = s->picture_struct == AV_PICTURE_STRUCTURE_TOP_FIELD;
         frame->frame->interlaced_frame = (s->picture_struct == AV_PICTURE_STRUCTURE_TOP_FIELD) || (s->picture_struct == AV_PICTURE_STRUCTURE_BOTTOM_FIELD);
+
+        if (s->avctx->hwaccel) {
+            const AVHWAccel *hwaccel = s->avctx->hwaccel;
+            av_assert0(!frame->hwaccel_picture_private);
+            if (hwaccel->frame_priv_data_size) {
+                frame->hwaccel_priv_buf = av_buffer_allocz(hwaccel->frame_priv_data_size);
+                if (!frame->hwaccel_priv_buf)
+                    goto fail;
+                frame->hwaccel_picture_private = frame->hwaccel_priv_buf->data;
+            }
+        }
+
         return frame;
 fail:
         ff_hevc_unref_frame(s, frame, ~0);
@@ -390,6 +405,7 @@ static HEVCFrame *generate_missing_ref(HEVCContext *s, int poc)
     if (!frame)
         return NULL;
 
+    if (!s->avctx->hwaccel) {
     if (!s->sps->pixel_shift) {
         for (i = 0; frame->frame->buf[i]; i++)
             memset(frame->frame->buf[i]->data, 1 << (s->sps->bit_depth - 1),
@@ -401,6 +417,7 @@ static HEVCFrame *generate_missing_ref(HEVCContext *s, int poc)
                     AV_WN16(frame->frame->data[i] + y * frame->frame->linesize[i] + 2 * x,
                             1 << (s->sps->bit_depth - 1));
                 }
+    }
     }
 
     frame->poc      = poc;

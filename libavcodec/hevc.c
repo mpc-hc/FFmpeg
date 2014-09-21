@@ -41,6 +41,11 @@
 
 const uint8_t ff_hevc_pel_weight[65] = { [2] = 0, [4] = 1, [6] = 2, [8] = 3, [12] = 4, [16] = 5, [24] = 6, [32] = 7, [48] = 8, [64] = 9 };
 
+static const enum AVPixelFormat hevc_hwaccel_pixfmt_list_420[] = {
+    AV_PIX_FMT_YUV420P,
+    AV_PIX_FMT_NONE
+};
+
 /**
  * NOTE: Each function hls_foo correspond to the function foo in the
  * specification (HLS stands for High Level Syntax).
@@ -308,8 +313,12 @@ static int set_sps(HEVCContext *s, const HEVCSPS *sps)
     s->avctx->coded_height        = sps->height;
     s->avctx->width               = sps->output_width;
     s->avctx->height              = sps->output_height;
-    s->avctx->pix_fmt             = sps->pix_fmt;
     s->avctx->has_b_frames        = sps->temporal_layer[sps->max_sub_layers - 1].num_reorder_pics;
+
+    if (sps->pix_fmt == AV_PIX_FMT_YUV420P)
+        s->avctx->pix_fmt = ff_thread_get_format(s->avctx, hevc_hwaccel_pixfmt_list_420);
+    else
+        s->avctx->pix_fmt = sps->pix_fmt;
 
     ff_set_sar(s->avctx, sps->vui.sar);
 
@@ -470,7 +479,7 @@ static int hls_slice_header(HEVCContext *s)
             sh->colour_plane_id = get_bits(gb, 2);
 
         if (!IS_IDR(s)) {
-            int short_term_ref_pic_set_sps_flag, poc;
+            int poc;
 
             sh->pic_order_cnt_lsb = get_bits(gb, s->sps->log2_max_poc_lsb);
             poc = ff_hevc_compute_poc(s, sh->pic_order_cnt_lsb);
@@ -483,11 +492,14 @@ static int hls_slice_header(HEVCContext *s)
             }
             s->poc = poc;
 
-            short_term_ref_pic_set_sps_flag = get_bits1(gb);
-            if (!short_term_ref_pic_set_sps_flag) {
+            sh->short_term_ref_pic_set_sps_flag = get_bits1(gb);
+            if (!sh->short_term_ref_pic_set_sps_flag) {
+                int pos = get_bits_left(gb);
                 ret = ff_hevc_decode_short_term_rps(s, &sh->slice_rps, s->sps, 1);
                 if (ret < 0)
                     return ret;
+
+                sh->short_term_ref_pic_set_size = pos - get_bits_left(gb);
 
                 sh->short_term_rps = &sh->slice_rps;
             } else {
@@ -2594,7 +2606,7 @@ fail:
     return ret;
 }
 
-static int decode_nal_unit(HEVCContext *s, const uint8_t *nal, int length)
+static int decode_nal_unit(HEVCContext *s, const uint8_t *nal, int length, const uint8_t *rawnal, int rawlength)
 {
     HEVCLocalContext *lc = s->HEVClc;
     GetBitContext *gb    = &lc->gb;
@@ -2698,6 +2710,17 @@ static int decode_nal_unit(HEVCContext *s, const uint8_t *nal, int length)
             }
         }
 
+        if (s->sh.first_slice_in_pic_flag && s->avctx->hwaccel) {
+            ret = s->avctx->hwaccel->start_frame(s->avctx, NULL, 0);
+            if (ret < 0)
+                goto fail;
+        }
+
+        if (s->avctx->hwaccel) {
+            ret = s->avctx->hwaccel->decode_slice(s->avctx, rawnal, rawlength);
+            if (ret < 0)
+                goto fail;
+        } else {
         if (s->threads_number > 1 && s->sh.num_entry_point_offsets > 0)
             ctb_addr_ts = hls_slice_data_wpp(s, nal, length);
         else
@@ -2709,6 +2732,7 @@ static int decode_nal_unit(HEVCContext *s, const uint8_t *nal, int length)
         if (ctb_addr_ts < 0) {
             ret = ctb_addr_ts;
             goto fail;
+        }
         }
         break;
     case NAL_EOS_NUT:
@@ -2786,8 +2810,8 @@ int ff_hevc_extract_rbsp(HEVCContext *s, const uint8_t *src, int length,
 #endif /* HAVE_FAST_UNALIGNED */
 
     if (i >= length - 1) { // no escaped 0
-        nal->data = src;
-        nal->size = length;
+        nal->data = nal->raw_data = src;
+        nal->size = nal->raw_size = length;
         return length;
     }
 
@@ -2837,6 +2861,8 @@ nsc:
 
     nal->data = dst;
     nal->size = di;
+    nal->raw_data = src;
+    nal->raw_size = si;
     return si;
 }
 
@@ -2938,7 +2964,7 @@ static int decode_nal_units(HEVCContext *s, const uint8_t *buf, int length)
         s->skipped_bytes = s->skipped_bytes_nal[i];
         s->skipped_bytes_pos = s->skipped_bytes_pos_nal[i];
 
-        ret = decode_nal_unit(s, s->nals[i].data, s->nals[i].size);
+        ret = decode_nal_unit(s, s->nals[i].data, s->nals[i].size, s->nals[i].raw_data, s->nals[i].raw_size);
         if (ret < 0) {
             av_log(s->avctx, AV_LOG_WARNING,
                    "Error parsing NAL unit #%d.\n", i);
@@ -3046,6 +3072,11 @@ static int hevc_decode_frame(AVCodecContext *avctx, void *data, int *got_output,
     if (ret < 0)
         return ret;
 
+    if (avctx->hwaccel) {
+        if (s->ref && avctx->hwaccel->end_frame(avctx) < 0)
+            av_log(avctx, AV_LOG_ERROR,
+                   "hardware accelerator failed to decode picture\n");
+    } else {
     /* verify the SEI checksum */
     if (avctx->err_recognition & AV_EF_CRCCHECK && s->is_decoded &&
         s->is_md5) {
@@ -3054,6 +3085,7 @@ static int hevc_decode_frame(AVCodecContext *avctx, void *data, int *got_output,
             ff_hevc_unref_frame(s, s->ref, ~0);
             return ret;
         }
+    }
     }
     s->is_md5 = 0;
 
@@ -3097,6 +3129,13 @@ static int hevc_ref_frame(HEVCContext *s, HEVCFrame *dst, HEVCFrame *src)
     dst->window     = src->window;
     dst->flags      = src->flags;
     dst->sequence   = src->sequence;
+
+    if (src->hwaccel_picture_private) {
+        dst->hwaccel_priv_buf = av_buffer_ref(src->hwaccel_priv_buf);
+        if (!dst->hwaccel_priv_buf)
+            goto fail;
+        dst->hwaccel_picture_private = dst->hwaccel_priv_buf->data;
+    }
 
     return 0;
 fail:
