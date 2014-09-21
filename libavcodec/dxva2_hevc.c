@@ -25,6 +25,10 @@
 #include "dxva2_internal.h"
 #include "hevc.h"
 
+#ifndef _MSC_VER
+#include "compat/windows/dxva_hevc.h"
+#endif
+
 #define MAX_SLICES 256
 
 struct hevc_dxva2_picture_context {
