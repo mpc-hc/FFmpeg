@@ -42,6 +42,9 @@
 const uint8_t ff_hevc_pel_weight[65] = { [2] = 0, [4] = 1, [6] = 2, [8] = 3, [12] = 4, [16] = 5, [24] = 6, [32] = 7, [48] = 8, [64] = 9 };
 
 static const enum AVPixelFormat hevc_hwaccel_pixfmt_list_420[] = {
+#if CONFIG_HEVC_DXVA2_HWACCEL
+    AV_PIX_FMT_DXVA2_VLD,
+#endif
     AV_PIX_FMT_YUV420P,
     AV_PIX_FMT_NONE
 };
