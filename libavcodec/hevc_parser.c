@@ -298,8 +298,6 @@ static int hevc_split(AVCodecContext *avctx, const uint8_t *buf, int buf_size)
                 has_ps = 1;
             else if (has_ps)
                 return i - 3;
-            else // no parameter set at the beginning of the stream
-                return 0;
         }
     }
     return 0;
