@@ -345,7 +345,7 @@ static int set_sps(HEVCContext *s, const HEVCSPS *sps)
     ff_hevc_dsp_init (&s->hevcdsp, sps->bit_depth);
     ff_videodsp_init (&s->vdsp,    sps->bit_depth);
 
-    if (sps->sao_enabled) {
+    if (sps->sao_enabled && !s->avctx->hwaccel) {
         av_frame_unref(s->tmp_frame);
         ret = get_buffer_sao(s, s->tmp_frame, sps);
         s->sao_frame = s->tmp_frame;
