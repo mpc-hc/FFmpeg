@@ -3406,7 +3406,7 @@ static int hevc_decode_extradata(HEVCContext *s)
 static av_cold int hevc_decode_init(AVCodecContext *avctx)
 {
     HEVCContext *s = avctx->priv_data;
-    int ret;
+    int ret, i;
 
     ff_init_cabac_states();
 
@@ -3436,6 +3436,22 @@ static av_cold int hevc_decode_init(AVCodecContext *avctx)
             s->threads_type = FF_THREAD_FRAME;
         else
             s->threads_type = FF_THREAD_SLICE;
+
+    if (s->pps == NULL) {
+        for (i = 0; i < MAX_PPS_COUNT; i++) {
+            if (s->pps_list[i] != NULL) {
+                HEVCPPS *pps = (HEVCPPS*)s->pps_list[i]->data;
+                if (s->sps_list[pps->sps_id] == NULL)
+                    continue;
+
+                HEVCSPS *sps = (HEVCSPS*)s->sps_list[pps->sps_id]->data;
+                s->avctx->pix_fmt = sps->pix_fmt;
+                s->avctx->profile = sps->ptl.general_ptl.profile_idc;
+                s->avctx->level   = sps->ptl.general_ptl.level_idc;
+                break;
+            }
+        }
+    }
 
     return 0;
 }
