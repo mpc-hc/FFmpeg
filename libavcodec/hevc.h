@@ -865,6 +865,7 @@ typedef struct HEVCContext {
     int bs_height;
 
     int is_decoded;
+    int NoRaslOutputFlag;
 
     HEVCPredContext hpc;
     HEVCDSPContext hevcdsp;
