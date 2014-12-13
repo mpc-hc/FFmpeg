@@ -2625,6 +2625,9 @@ static int hevc_frame_start(HEVCContext *s)
     if (ret < 0)
         goto fail;
 
+    if (IS_IRAP(s))
+        s->NoRaslOutputFlag = 0;
+
     if (!s->avctx->hwaccel)
         ff_thread_finish_setup(s->avctx);
 
@@ -2792,6 +2795,8 @@ static int decode_nal_units(HEVCContext *s, const uint8_t *buf, int length)
 
     s->ref = NULL;
     s->last_eos = s->eos;
+    if (s->last_eos)
+      s->NoRaslOutputFlag = 1;
     s->eos = 0;
 
     /* split the input packet into NAL units, so we know the upper bound on the
@@ -3243,6 +3248,7 @@ static int hevc_update_thread_context(AVCodecContext *dst,
     s->pocTid0    = s0->pocTid0;
     s->max_ra     = s0->max_ra;
     s->eos        = s0->eos;
+    s->NoRaslOutputFlag = s0->NoRaslOutputFlag;
 
     s->is_nalff        = s0->is_nalff;
     s->nal_length_size = s0->nal_length_size;
@@ -3347,6 +3353,7 @@ static av_cold int hevc_decode_init(AVCodecContext *avctx)
 
     s->enable_parallel_tiles = 0;
     s->picture_struct = 0;
+    s->NoRaslOutputFlag = 1;
 
     if(avctx->active_thread_type & FF_THREAD_SLICE)
         s->threads_number = avctx->thread_count;
@@ -3388,6 +3395,7 @@ static void hevc_decode_flush(AVCodecContext *avctx)
     HEVCContext *s = avctx->priv_data;
     ff_hevc_flush_dpb(s);
     s->max_ra = INT_MAX;
+    s->NoRaslOutputFlag = 1;
 }
 
 #define OFFSET(x) offsetof(HEVCContext, x)
