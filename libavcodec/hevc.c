@@ -316,10 +316,18 @@ static int set_sps(HEVCContext *s, const HEVCSPS *sps)
     s->avctx->height              = sps->output_height;
     s->avctx->has_b_frames        = sps->temporal_layer[sps->max_sub_layers - 1].num_reorder_pics;
 
-    if (sps->pix_fmt == AV_PIX_FMT_YUV420P || sps->pix_fmt == AV_PIX_FMT_YUVJ420P) {
+    switch (sps->pix_fmt) {
+    case AV_PIX_FMT_YUV420P:
+    case AV_PIX_FMT_YUVJ420P:
 #if CONFIG_HEVC_DXVA2_HWACCEL
         *fmt++ = AV_PIX_FMT_DXVA2_VLD;
 #endif
+        break;
+    case AV_PIX_FMT_YUV420P10:
+#if CONFIG_HEVC_DXVA2_HWACCEL
+        *fmt++ = AV_PIX_FMT_DXVA2_VLD;
+#endif
+        break;
     }
     
     *fmt++ = sps->pix_fmt;
