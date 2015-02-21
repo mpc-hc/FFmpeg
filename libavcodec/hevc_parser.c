@@ -288,15 +288,18 @@ static int hevc_split(AVCodecContext *avctx, const uint8_t *buf, int buf_size)
 {
     int i;
     uint32_t state = -1;
-    int has_ps = 0;
+    int has_sps = 0, has_pps = 0;
 
     for (i = 0; i < buf_size; i++) {
         state = (state << 8) | buf[i];
         if (((state >> 8) & 0xFFFFFF) == START_CODE) {
             int nut = (state >> 1) & 0x3F;
-            if (nut >= NAL_VPS && nut <= NAL_PPS)
-                has_ps = 1;
-            else if (has_ps)
+            if (nut >= NAL_VPS && nut <= NAL_PPS) {
+                if (nut == NAL_SPS)
+                    has_sps = 1;
+                else if (nut == NAL_PPS)
+                    has_pps = 1;
+            } else if (has_sps && has_pps)
                 return i - 3;
         }
     }
