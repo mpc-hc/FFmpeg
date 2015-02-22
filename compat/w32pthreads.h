@@ -143,6 +143,12 @@ static inline int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex
     return 0;
 }
 
+static inline int pthread_cond_timedwait_w32(pthread_cond_t *cond, pthread_mutex_t *mutex, DWORD timeout)
+{
+    SleepConditionVariableCS(cond, mutex, timeout);
+    return 0;
+}
+
 static inline void pthread_cond_signal(pthread_cond_t *cond)
 {
     WakeConditionVariable(cond);
