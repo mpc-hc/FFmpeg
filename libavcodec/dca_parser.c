@@ -60,10 +60,10 @@ static int dca_parse_hd_framesize(const uint8_t *buf, int buf_size, int *framesi
 
     if (get_bits1(&gb)) {
         skip_bits(&gb, 12);
-        *framesize = get_bits(&gb, 20);
+        *framesize = get_bits(&gb, 20) + 1;
     } else {
         skip_bits(&gb, 8);
-        *framesize = get_bits(&gb, 16);
+        *framesize = get_bits(&gb, 16) + 1;
     }
 
     return 0;
@@ -91,9 +91,11 @@ static int dca_find_frame_end(DCAParseContext *pc1, const uint8_t *buf,
             if (IS_MARKER(state)) {
                 if (!pc1->lastmarker || CORE_MARKER(state) == pc1->lastmarker || pc1->lastmarker == DCA_SYNCWORD_SUBSTREAM) {
                     start_found = 1;
-                    if (IS_EXSS_MARKER(state))
+                    if (IS_EXSS_MARKER(state)) {
                         pc1->lastmarker = EXSS_MARKER(state);
-                    else
+                        if (dca_parse_hd_framesize(&buf[i + 1], buf_size - (i + 1), &pc1->hdframesize) < 0)
+                            pc1->hdframesize = 0;
+                    } else
                         pc1->lastmarker = CORE_MARKER(state);
                     i++;
                     break;
@@ -105,7 +107,7 @@ static int dca_find_frame_end(DCAParseContext *pc1, const uint8_t *buf,
         for (; i < buf_size; i++) {
             pc1->size++;
             state = (state << 8) | buf[i];
-            if (EXSS_MARKER(state) == DCA_SYNCWORD_SUBSTREAM && pc1->size >= pc1->framesize && !pc1->hdframesize) {
+            if (EXSS_MARKER(state) == DCA_SYNCWORD_SUBSTREAM && pc1->lastmarker != DCA_SYNCWORD_SUBSTREAM && pc1->size >= pc1->framesize && !pc1->hdframesize) {
                 if (dca_parse_hd_framesize(&buf[i+1], buf_size - (i+1), &pc1->hdframesize) < 0)
                     pc1->hdframesize = 0;
             }
