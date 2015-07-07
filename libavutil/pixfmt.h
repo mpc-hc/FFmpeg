@@ -495,6 +495,7 @@ enum AVColorTransferCharacteristic {
     AVCOL_TRC_IEC61966_2_1 = 13, ///< IEC 61966-2-1 (sRGB or sYCC)
     AVCOL_TRC_BT2020_10    = 14, ///< ITU-R BT2020 for 10 bit system
     AVCOL_TRC_BT2020_12    = 15, ///< ITU-R BT2020 for 12 bit system
+    AVCOL_TRC_SMPTE2084    = 16, ///< SMPTE ST 2084
     AVCOL_TRC_NB,                ///< Not part of ABI
 };
 
