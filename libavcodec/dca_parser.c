@@ -109,7 +109,7 @@ static int dca_find_frame_end(DCAParseContext *pc1, const uint8_t *buf,
         for (; i < buf_size; i++) {
             pc1->size++;
             state = (state << 8) | buf[i];
-            if (EXSS_MARKER(state) == DCA_SYNCWORD_SUBSTREAM && pc1->lastmarker != DCA_SYNCWORD_SUBSTREAM && pc1->size >= pc1->framesize && !pc1->hdframesize) {
+            if (EXSS_MARKER(state) == DCA_SYNCWORD_SUBSTREAM && pc1->lastmarker != DCA_SYNCWORD_SUBSTREAM && pc1->size >= (pc1->framesize - 4) && !pc1->hdframesize) {
                 if (dca_parse_hd_framesize(&buf[i+1], buf_size - (i+1), &pc1->hdframesize) < 0)
                     pc1->hdframesize = 0;
             }
