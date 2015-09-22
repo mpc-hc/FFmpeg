@@ -583,15 +583,17 @@ static int asf_read_metadata_obj(AVFormatContext *s, const GUIDParseTable *g)
             break;
         type     = avio_rl16(pb);
         val_len  = avio_rl32(pb);
-        name     = av_malloc(name_len);
+        name     = av_malloc(buflen);
         if (!name)
             return AVERROR(ENOMEM);
         avio_get_str16le(pb, name_len, name,
                          buflen);
         if (!strcmp(name, "AspectRatioX") || !strcmp(name, "AspectRatioY")) {
             ret = asf_store_aspect_ratio(s, st_num, name, type);
-            if (ret < 0)
-                return ret;
+            if (ret < 0) {
+                av_freep(&name);
+                break;
+            }
         } else {
             if (st_num < ASF_MAX_STREAMS) {
                 if ((ret = process_metadata(s, name, name_len, val_len, type,
@@ -1139,7 +1141,7 @@ static int asf_read_replicated_data(AVFormatContext *s, ASFPacket *asf_pkt)
     if (!asf_pkt->data_size) {
         asf_pkt->data_size = asf_pkt->size_left = avio_rl32(pb); // read media object size
         if (asf_pkt->data_size <= 0)
-            return AVERROR_EOF;
+            return AVERROR_INVALIDDATA;
         if ((ret = av_new_packet(&asf_pkt->avpkt, asf_pkt->data_size)) < 0)
             return ret;
     } else
@@ -1188,6 +1190,8 @@ static int asf_read_multiple_payload(AVFormatContext *s, AVPacket *pkt,
             skip = pay_len - asf_pkt->size_left;
             pay_len = asf_pkt->size_left;
         }
+        if (asf_pkt->size_left <= 0)
+            return AVERROR_INVALIDDATA;
         if ((ret = avio_read(pb, p, pay_len)) < 0)
             return ret;
         if (s->key && s->keylen == 20)
@@ -1235,7 +1239,7 @@ static int asf_read_single_payload(AVFormatContext *s, AVPacket *pkt,
         return AVERROR_INVALIDDATA;
     }
     p = asf_pkt->avpkt.data + asf_pkt->data_size - asf_pkt->size_left;
-    if (size > asf_pkt->size_left)
+    if (size > asf_pkt->size_left || asf_pkt->size_left <= 0)
         return AVERROR_INVALIDDATA;
     if (asf_pkt->size_left > size)
         asf_pkt->size_left -= size;
