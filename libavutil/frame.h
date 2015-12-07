@@ -111,12 +111,18 @@ enum AVFrameSideDataType {
      * enum AVAudioServiceType defined in avcodec.h.
      */
     AV_FRAME_DATA_AUDIO_SERVICE_TYPE,
+
     /**
      * Mastering display metadata associated with a video frame. The payload is
      * an AVMasteringDisplayMetadata type and contains information about the
      * mastering display color volume.
      */
-    AV_FRAME_DATA_MASTERING_DISPLAY_METADATA
+    AV_FRAME_DATA_MASTERING_DISPLAY_METADATA,
+
+    /**
+     * HDR Mastering Display Information, see HEVC spec
+     */
+    AV_FRAME_DATA_HDR_MASTERING_INFO,
 };
 
 enum AVActiveFormatDescription {
