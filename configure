@@ -1919,6 +1919,7 @@ TOOLCHAIN_FEATURES="
 TYPES_LIST="
     CONDITION_VARIABLE_Ptr
     DXVA_PicParams_HEVC
+    DXVA_PicParams_VP9
     socklen_t
     struct_addrinfo
     struct_group_source_req
@@ -2576,9 +2577,9 @@ vc1_vdpau_decoder_deps="vdpau"
 vc1_vdpau_decoder_select="vc1_decoder"
 vc1_vdpau_hwaccel_deps="vdpau"
 vc1_vdpau_hwaccel_select="vc1_decoder"
-vp9_d3d11va_hwaccel_deps="d3d11va DXVA_PicParams_VP9"
+vp9_d3d11va_hwaccel_deps="d3d11va"
 vp9_d3d11va_hwaccel_select="vp9_decoder"
-vp9_dxva2_hwaccel_deps="dxva2 DXVA_PicParams_VP9"
+vp9_dxva2_hwaccel_deps="dxva2"
 vp9_dxva2_hwaccel_select="vp9_decoder"
 vp9_vaapi_hwaccel_deps="vaapi VADecPictureParameterBufferVP9"
 vp9_vaapi_hwaccel_select="vp9_decoder"
