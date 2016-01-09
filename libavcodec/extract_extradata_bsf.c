@@ -56,7 +56,7 @@ static int extract_extradata_h2645(AVBSFContext *ctx, AVPacket *pkt,
         HEVC_NAL_VPS, HEVC_NAL_SPS, HEVC_NAL_PPS,
     };
     static const int extradata_nal_types_h264[] = {
-        H264_NAL_SPS, H264_NAL_PPS,
+        H264_NAL_SPS, H264_NAL_PPS, H264_NAL_SPS_SUBSET,
     };
 
     ExtractExtradataContext *s = ctx->priv_data;
@@ -88,7 +88,7 @@ static int extract_extradata_h2645(AVBSFContext *ctx, AVPacket *pkt,
                 if (nal->type == HEVC_NAL_SPS) has_sps = 1;
                 if (nal->type == HEVC_NAL_VPS) has_vps = 1;
             } else {
-                if (nal->type == H264_NAL_SPS) has_sps = 1;
+                if (nal->type == H264_NAL_SPS || nal->type == H264_NAL_SPS_SUBSET) has_sps = 1;
             }
         }
     }
