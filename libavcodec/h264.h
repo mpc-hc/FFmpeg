@@ -826,7 +826,7 @@ typedef struct H264Context {
     int cur_bit_depth_luma;
     int16_t slice_row[MAX_SLICES]; ///< to detect when MAX_SLICES is too low
 
-    uint8_t parse_history[6];
+    uint8_t parse_history[9];
     int parse_history_count;
     int parse_last_mb;
 
