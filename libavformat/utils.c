@@ -3854,8 +3854,10 @@ FF_DISABLE_DEPRECATION_WARNINGS
             st->codec->coded_height = st->internal->avctx->coded_height;
         }
 
-        if (st->codec->codec_tag != MKTAG('t','m','c','d'))
+        if (st->codec->codec_tag != MKTAG('t','m','c','d')) {
             st->codec->time_base = st->internal->avctx->time_base;
+            st->codec->ticks_per_frame = st->internal->avctx->ticks_per_frame;
+        }
         st->codec->framerate = st->avg_frame_rate;
 
         if (st->internal->avctx->subtitle_header) {
