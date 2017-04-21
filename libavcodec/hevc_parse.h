@@ -28,6 +28,6 @@
 
 int ff_hevc_decode_extradata(const uint8_t *data, int size, HEVCParamSets *ps,
                              int *is_nalff, int *nal_length_size, int err_recognition,
-                             int apply_defdispwin, void *logctx);
+                             int apply_defdispwin, void *logctx, HEVCContext *hevcctx);
 
 #endif /* AVCODEC_HEVC_PARSE_H */

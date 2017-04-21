@@ -23,7 +23,7 @@
 
 static int hevc_decode_nal_units(const uint8_t *buf, int buf_size, HEVCParamSets *ps,
                                  int is_nalff, int nal_length_size, int err_recognition,
-                                 int apply_defdispwin, void *logctx)
+                                 int apply_defdispwin, void *logctx, HEVCContext *hevcctx)
 {
     int i;
     int ret = 0;
@@ -54,6 +54,15 @@ static int hevc_decode_nal_units(const uint8_t *buf, int buf_size, HEVCParamSets
             if (ret < 0)
                 goto done;
             break;
+        case HEVC_NAL_SEI_PREFIX:
+        case HEVC_NAL_SEI_SUFFIX:
+            if (hevcctx) {
+                hevcctx->HEVClc->gb = nal->gb;
+                ret = ff_hevc_decode_nal_sei(hevcctx);
+                if (ret < 0)
+                    goto done;
+            }
+            break;
         default:
             av_log(logctx, AV_LOG_VERBOSE, "Ignoring NAL type %d in extradata\n", nal->type);
             break;
@@ -70,7 +79,7 @@ done:
 
 int ff_hevc_decode_extradata(const uint8_t *data, int size, HEVCParamSets *ps,
                              int *is_nalff, int *nal_length_size, int err_recognition,
-                             int apply_defdispwin, void *logctx)
+                             int apply_defdispwin, void *logctx, HEVCContext *hevcctx)
 {
     int ret = 0;
     GetByteContext gb;
@@ -109,7 +118,7 @@ int ff_hevc_decode_extradata(const uint8_t *data, int size, HEVCParamSets *ps,
                 }
 
                 ret = hevc_decode_nal_units(gb.buffer, nalsize, ps, *is_nalff, *nal_length_size,
-                                            err_recognition, apply_defdispwin, logctx);
+                                            err_recognition, apply_defdispwin, logctx, hevcctx);
                 if (ret < 0) {
                     av_log(logctx, AV_LOG_ERROR,
                            "Decoding nal unit %d %d from hvcC failed\n",
@@ -126,7 +135,7 @@ int ff_hevc_decode_extradata(const uint8_t *data, int size, HEVCParamSets *ps,
     } else {
         *is_nalff = 0;
         ret = hevc_decode_nal_units(data, size, ps, *is_nalff, *nal_length_size,
-                                    err_recognition, apply_defdispwin, logctx);
+                                    err_recognition, apply_defdispwin, logctx, hevcctx);
         if (ret < 0)
             return ret;
     }
